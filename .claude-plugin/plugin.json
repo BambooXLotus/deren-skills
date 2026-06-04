@@ -5,6 +5,7 @@
     "./skills/rick/rick-respawn",
     "./skills/rick/rick-mode",
     "./skills/rick/rick-plan",
-    "./skills/rick/rick-improve"
+    "./skills/rick/rick-improve",
+    "./skills/rick/rick-review"
   ]
 }

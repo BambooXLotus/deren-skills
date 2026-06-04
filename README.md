@@ -27,8 +27,9 @@ Session continuity + brutal review, themed around Rick Sanchez. All TypeScript-f
 | `rick-respawn` | Boots a new session from the most recent (or named) save. Summarizes situation, last move, blockers, and Rick mode. |
 | `rick-mode` | Activate the Rick Sanchez persona for brutal architectural review. Pre-Review Protocol (read the file, trace deps + type surface, verify `package.json` + `tsconfig.json`), TS escape-hatch hunting (`as any`, `!`, `@ts-ignore`), Expected / Actual / Consequence findings. Explicit invocation only. |
 | `rick-improve` | Self-improvement loop on any rick-* skill prompt. Bounded 3-round critique-and-fix, 250-line cap. Snapshots to `<skill>/versions/v<N>-pre.md` and `v<N>-post.md`, appends to `VERSIONS.md`. Uses `rick-mode` as the reference bar. Explicit invocation only. |
+| `rick-review` | Multi-agent council code review. Up to 7 specialized Rick agents review in parallel (3 always-run, 4 conditional based on diff scope), aggregated into a versioned report under `docs/rick/reviews/<REVIEW_NAME>/`. Includes parasite check (verifies cited code against the diff) and skeptic pass (kills findings that don't actually matter today). |
 
-The four user-facing skills share a slug. `rick-plan` writes `docs/rick/plans/<ts>_<slug>_rick-plan.md`, `rick-save` writes `docs/rick/saves/<ts>_<slug>_rick-save.md`, `rick-respawn` reads either, `rick-mode` reviews what shipped. Same slug threads them. `rick-improve` is meta — it edits the skill prompts themselves, with versioning under `skills/rick/<name>/versions/`.
+The four user-facing review/session skills share a slug. `rick-plan` writes `docs/rick/plans/<ts>_<slug>_rick-plan.md`, `rick-save` writes `docs/rick/saves/<ts>_<slug>_rick-save.md`, `rick-respawn` reads either, `rick-mode` reviews what shipped, `rick-review` produces a multi-lens council report. Same slug threads them. `rick-improve` is meta — it edits the skill prompts themselves, with versioning under `skills/rick/<name>/versions/`.
 
 ## Repo layout
 
