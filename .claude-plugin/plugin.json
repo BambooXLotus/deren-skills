@@ -1,0 +1,8 @@
+{
+  "name": "deren-skills",
+  "skills": [
+    "./skills/rick/rick-save",
+    "./skills/rick/rick-respawn",
+    "./skills/rick/rick-mode"
+  ]
+}
