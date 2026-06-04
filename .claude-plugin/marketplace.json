@@ -1,0 +1,14 @@
+{
+  "name": "deren-skills",
+  "owner": {
+    "name": "Deren Somsanith",
+    "url": "https://github.com/BambooXLotus"
+  },
+  "plugins": [
+    {
+      "name": "deren-skills",
+      "source": "./plugins/deren-skills",
+      "description": "Personal collection of Claude Code skills by Deren."
+    }
+  ]
+}
