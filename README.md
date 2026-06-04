@@ -22,11 +22,12 @@ Session continuity + brutal review, themed around Rick Sanchez. All TypeScript-f
 
 | Skill | Description |
 | --- | --- |
+| `rick-plan` | Plan a piece of work in Rick's voice. Reads the code first, writes an opinionated numbered plan to `docs/rick/plans/`, surfaces decisions (with Rick's pick + tradeoff), and an explicit out-of-scope list. |
 | `rick-save` | Captures the current warm thread to `docs/rick/saves/`. Picks a slug, writes a dense second-person briefing for the next session. |
 | `rick-respawn` | Boots a new session from the most recent (or named) save. Summarizes situation, last move, blockers, and Rick mode. |
 | `rick-mode` | Activate the Rick Sanchez persona for brutal architectural review. Pre-Review Protocol (read the file, trace deps + type surface, verify `package.json` + `tsconfig.json`), TS escape-hatch hunting (`as any`, `!`, `@ts-ignore`), Expected / Actual / Consequence findings. Explicit invocation only. |
 
-All save output is written under `docs/rick/` in your project (created on first run).
+The four skills share a slug. `rick-plan` writes `docs/rick/plans/<ts>_<slug>_rick-plan.md`, `rick-save` writes `docs/rick/saves/<ts>_<slug>_rick-save.md`, `rick-respawn` reads either, `rick-mode` reviews what shipped. Same slug threads them.
 
 ## Repo layout
 

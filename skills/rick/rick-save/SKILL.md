@@ -81,20 +81,24 @@ Stop. No summary. No "anything else."
 If `docs/rick/README.md` does not exist, create it with this content:
 
 ```markdown
-# Rick Saves
+# Rick
 
-Session save points from `/rick-save`. Each save is one warm thread, tagged with a one-word slug so multiple parallel topics coexist.
+Artifacts from the Rick skills. Each one is one warm thread, tagged with a one-word slug so multiple parallel topics coexist.
 
 ## Structure
 
-- `saves/YYYY-MM-DD_HHMM_<slug>_rick-save.md` is one save. Sorted by filename.
+- `plans/YYYY-MM-DD_HHMM_<slug>_rick-plan.md` is one plan from `/rick-plan` before work starts.
+- `saves/YYYY-MM-DD_HHMM_<slug>_rick-save.md` is one save from `/rick-save` at session end.
 - `recaps/YYYY-MM-DD_HHMM_rick-recap.md` is one end-of-day audit across the day's saves.
+
+All sorted by filename.
 
 ## Commands
 
+- `/rick-plan` writes an opinionated plan before any code lands. Numbered steps, decisions (Rick's pick + tradeoff), explicit out-of-scope.
 - `/rick-save` writes the current warm thread for the next session. Picks a slug from session context, or accepts an explicit slug as the first argument.
 - `/rick-respawn` boots from the most recent save. Pass a slug to load a specific one (`/rick-respawn auth`). Pass a path to load an explicit file.
 - `/rick-recap` audits the day's saves across all slugs.
 
-Saves are second person, addressed to the next Claude. Old saves stay as an audit trail.
+Plans and saves are second person, addressed to the next reader. Old files stay as an audit trail.
 ```
