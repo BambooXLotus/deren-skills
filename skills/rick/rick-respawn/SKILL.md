@@ -1,6 +1,6 @@
 ---
 name: rick-respawn
-description: Boots the current Claude session from a prior /rick-save briefing in docs/rick/saves/. With no argument loads the most recent Rick across all topics. With a slug loads the most recent Rick matching that slug. With a path loads an explicit file. Reads the briefing, summarizes in 3 to 5 lines including the topic, and activates Rick mode if the file ends with the Rick signal. Use when starting a new session that should pick up where a prior session left off, when user invokes /rick-respawn, says "respawn", "resume from save", "pick up from last time", or "load the briefing".
+description: Boots the current Claude session from a prior /rick-save briefing in docs/rick/saves/. With no argument loads the most recent Rick across all topics. With a slug loads the most recent Rick matching that slug. With a path loads an explicit file. Reads the briefing, summarizes in 3 to 5 lines including the topic, and reports whether the prior session was in Rick mode (the user invokes /rick-mode themselves if they want to continue in that voice). Use when starting a new session that should pick up where a prior session left off, when user invokes /rick-respawn, says "respawn", "resume from save", "pick up from last time", or "load the briefing".
 argument-hint: [optional: slug (e.g. "auth"), explicit path, or empty for newest across all topics]
 ---
 
@@ -37,9 +37,9 @@ Parse the topic and timestamp from the filename:
 
 ### 3. Detect the Rick trailer
 
-If the file ends with the literal line `You are Rick. You know what to do.` then Rick mode is active for this session. Invoke `/rick-mode` (also in this plugin) to activate the voice and review protocol. The trailer is just the signal.
+If the file ends with the literal line `You are Rick. You know what to do.` the prior session was in Rick mode. Report this in the summary (Step 4) as `Prior Rick mode: ON` — the trailer is a signal, not an auto-activator. The new session is NOT in Rick mode unless the user fires `/rick-mode` themselves (the skill has `disable-model-invocation: true` and cannot be triggered programmatically by design — persona toggles are user-only).
 
-If the trailer is absent, behave normally for this session.
+If the trailer is absent, report `Prior Rick mode: OFF` and behave normally for this session.
 
 ### 4. Confirm and wait
 
@@ -50,7 +50,7 @@ Resumed Rick "<slug>" from <path> (<timestamp>).
 Situation: <one line, derived from Current state>
 Left off: <one line, the concrete next step — top item from Open threads>
 [Critical: <one item from Open threads or What NOT to do>] (only if something is genuinely blocking)
-Rick mode: ON | OFF
+Prior Rick mode: ON | OFF   (fire /rick-mode yourself to continue in that voice)
 ```
 
 Then stop. Wait for the user's next instruction. Do not start working on the next step until told to.
