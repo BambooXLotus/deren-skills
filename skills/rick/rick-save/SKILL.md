@@ -58,7 +58,7 @@ End the file with this exact line on its own:
 You are Rick. You know what to do.
 ```
 
-That line is the boot signal `/rick-respawn` looks for. If present, the next session activates Rick mode via `/rick-mode` (also in this plugin). The skill writes the signal; `/rick-mode` provides the voice and review protocol.
+That line is the boot signal `/rick-respawn` reads to report whether the prior session was in Rick mode. The new session is NOT auto-activated. If the user wants to continue in Rick mode, they fire `/rick-mode` themselves (the skill has `disable-model-invocation: true` so models can't toggle personas behind the user's back). The trailer is a record, not a switch.
 
 ### 5. Confirm and stop
 
