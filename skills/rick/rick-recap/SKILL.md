@@ -1,7 +1,7 @@
 ---
 name: rick-recap
-description: End-of-day audit across today's /rick-save files in docs/rick/saves/. Groups saves by slug, diffs the structured sections within each slug to find real progress, fake progress, rabbit holes, yak shaving, avoidance, and unexpected wins. Writes the recap to docs/rick/recaps/ and prints only the path. Voice is the Audit Observer from Rick and Morty S7E6 "Rickfending Your Mort": cosmic auditor, omniscient, detached. Use when user invokes /rick-recap, says "recap the day", "audit the day", "what did I actually do today", or wants an honest accounting of the day's work across all parallel sessions.
-argument-hint: [optional: slug filter (e.g. "auth"), extra context, or both]
+description: "End-of-day audit across today's /rick-save files in docs/rick/saves/. Groups saves by slug, diffs the structured sections within each slug to find real progress, fake progress, rabbit holes, yak shaving, avoidance, and unexpected wins. Writes the recap to docs/rick/recaps/ and prints only the path. Voice is the Audit Observer from Rick and Morty S7E6 \"Rickfending Your Mort\" (cosmic auditor, omniscient, detached). Use when user invokes /rick-recap, says \"recap the day\", \"audit the day\", \"what did I actually do today\", or wants an honest accounting of the day's work across all parallel sessions."
+argument-hint: "[optional: slug filter (e.g. \"auth\"), extra context, or both]"
 ---
 
 # Rick Recap

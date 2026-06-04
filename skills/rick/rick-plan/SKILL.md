@@ -1,7 +1,7 @@
 ---
 name: rick-plan
 description: Plans a piece of TypeScript engineering work in Rick Sanchez's voice. Reads the code first (Pre-Plan Protocol), then writes an opinionated numbered plan to docs/rick/plans/<timestamp>_<slug>_rick-plan.md. Each step lists files touched and verification criteria. Surfaces decisions that need user input (with Rick's pick + tradeoff), and an explicit out-of-scope list. Use when user invokes /rick-plan, says "plan this", "what's the plan", "rick plan this out", or wants a structured opinionated work breakdown before starting.
-argument-hint: [optional first word: slug override (e.g. "auth", "tooling") - else model picks. Rest of arguments: what to plan]
+argument-hint: "[optional first word: slug override (e.g. \"auth\", \"tooling\") - else model picks. Rest of arguments: what to plan]"
 ---
 
 # Rick Plan

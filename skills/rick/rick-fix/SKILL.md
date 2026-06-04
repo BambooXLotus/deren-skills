@@ -1,7 +1,7 @@
 ---
 name: rick-fix
 description: Reads a rick-review report, resolves a finding ref, and implements fixes sequentially. Uses /tdd for behavioral findings (write failing test first), direct fix for structural findings. Runs affected tests after each fix. Updates the report with FIXED / SKIPPED / BLOCKED markers. Use when user invokes /rick-fix, says "fix the findings", "implement the P0s", or has a rick-review report ready to resolve.
-argument-hint: [<report-path>] <finding-ref> — ref: P0-1 | all-P0 | all-P1 | all (report path auto-resolves from branch if omitted)
+argument-hint: "[<report-path>] <finding-ref> — ref: P0-1 | all-P0 | all-P1 | all (report path auto-resolves from branch if omitted)"
 disable-model-invocation: true
 ---
 

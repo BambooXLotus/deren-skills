@@ -1,7 +1,7 @@
 ---
 name: rick-save
 description: Captures the current session's warm thread to docs/rick/saves/ so a future Claude session can resume via /rick-respawn. Auto-gathers git state, picks a one-word topic slug, and writes a dense second-person briefing focused on what is still live right now (not a session recap). Use when user invokes /rick-save, says "save the session", "hand off this thread", "pick a slug and save", or wants the next Claude to pick up exactly where this one is.
-argument-hint: [optional first word: slug override (e.g. "auth", "tooling") - else model picks. Rest of arguments: extra focus for the next session]
+argument-hint: "[optional first word: slug override (e.g. \"auth\", \"tooling\") - else model picks. Rest of arguments: extra focus for the next session]"
 ---
 
 # Rick Save
