@@ -43,12 +43,16 @@ If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD 
 
 ## Step 2 — Resolve `REVIEW_NAME`
 
+This naming must match `rick-fix` Step 1 exactly. Both skills derive it from the same branch state so the read/write round-trip works.
+
 Priority order:
 
-1. PR number if provided → `pr-<number>` (e.g. `pr-213`)
-2. Issue number in branch name matching `^[0-9]+-` → `issue-<number>` (e.g. `issue-9`)
-3. Sanitized branch name (replace `/` and spaces with `-`) → `feature-add-payments`
+1. Issue number in branch name matching `^[0-9]+-` → `issue-<number>` (e.g. `issue-9`)
+2. Sanitized branch name, replace `/` and spaces with `-` → `feature-add-payments`
+3. PR number, only when 1 and 2 didn't resolve (rare — would mean a PR against a branch with neither an issue prefix nor a usable name) → `pr-<number>`
 4. Fallback → `review-<YYYY-MM-DD>`
+
+Rationale: branches and issue numbers are stable. PR numbers can drift (close/reopen, re-push). Both `rick-review` and `rick-fix` start from the local branch, so deriving from branch state guarantees symmetry without coupling to GitHub state. PR number is still used for branch-verification in Step 1, just not as the directory name.
 
 ## Step 3 — Output Path and Version
 

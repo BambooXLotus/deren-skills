@@ -17,15 +17,20 @@ Valid refs: `P0-1`, `P1-3`, etc. (specific row), or `all-P0`, `all-P1`, `all-P2`
 
 If `FINDING_REF` is missing but `REPORT_PATH` ends in `.md`, default `FINDING_REF` to `all`.
 
-If `REPORT_PATH` is missing, **auto-resolve from the current branch** using `rick-review`'s naming logic:
+If `REPORT_PATH` is missing, **auto-resolve from the current branch** using the same algorithm as `rick-review` Step 2 (kept in sync — drift between these two breaks the round-trip):
 
 1. `git branch --show-current`
-2. Compute `REVIEW_NAME`:
-   - If branch starts with `^[0-9]+-` → `issue-<number>`
-   - Else sanitize branch name (replace `/` and spaces with `-`)
-3. Check `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md`
-4. If exists: use it, default `FINDING_REF` to `all` if missing.
-5. If not: print usage and stop:
+2. Compute `REVIEW_NAME` by priority:
+   - Branch matches `^[0-9]+-` → `issue-<number>`
+   - Else sanitized branch name (replace `/` and spaces with `-`) → e.g. `feature-add-payments`
+   - Else, if a PR is open for this branch (`gh pr view --json number 2>/dev/null`) → `pr-<number>`
+   - Else fallback → `review-<YYYY-MM-DD>`
+3. Resolve `REPORT_PATH`:
+   - **a. Canonical.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md`. If it exists, use it.
+   - **b. Legacy fallback (Option B migration).** If (a) doesn't exist AND `REVIEW_NAME` resolved via the issue or branch path (not `pr-*`), also try `docs/rick/reviews/pr-<n>/pr-<n>-code-review.md`, where `<n>` = `gh pr view --json number --jq .number 2>/dev/null`. This catches reports written by the old PR-first naming convention.
+   - **c.** If neither resolved, print usage and stop.
+4. If a report was found, default `FINDING_REF` to `all` if missing.
+5. Usage on stop:
 
 ```
 Usage: /rick-fix [<report-path>] <finding-ref>
