@@ -7,6 +7,7 @@
     "./skills/rick/rick-plan",
     "./skills/rick/rick-improve",
     "./skills/rick/rick-review",
-    "./skills/rick/rick-fix"
+    "./skills/rick/rick-fix",
+    "./skills/rick/rick-recap"
   ]
 }
