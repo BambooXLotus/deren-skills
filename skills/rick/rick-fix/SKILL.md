@@ -21,21 +21,24 @@ If `REPORT_PATH` is missing, **auto-resolve from the current branch** using the 
 
 1. `git branch --show-current`
 2. Compute `REVIEW_NAME` by priority:
-   - Branch matches `^[0-9]+-` → `issue-<number>`
-   - Else sanitized branch name (replace `/` and spaces with `-`) → e.g. `feature-add-payments`
+   - Branch non-empty and not in `{main, master, develop}` → sanitized branch name (replace `/` and spaces with `-`) → e.g. `48-rotate-share-token`, `feature-add-payments`
    - Else, if a PR is open for this branch (`gh pr view --json number 2>/dev/null`) → `pr-<number>`
    - Else fallback → `review-<YYYY-MM-DD>`
-3. Resolve `REPORT_PATH`:
-   - **a. Canonical.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md`. If it exists, use it.
-   - **b. Legacy fallback (Option B migration).** If (a) doesn't exist AND `REVIEW_NAME` resolved via the issue or branch path (not `pr-*`), also try `docs/rick/reviews/pr-<n>/pr-<n>-code-review.md`, where `<n>` = `gh pr view --json number --jq .number 2>/dev/null`. This catches reports written by the old PR-first naming convention.
-   - **c.** If neither resolved, print usage and stop.
+3. Resolve `REPORT_PATH` in priority order — first that exists wins:
+   - **a. Canonical (current).** `docs/rick/<REVIEW_NAME>/review/current.md`.
+   - **b. Legacy: artifact-first with folder-prefixed filename.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-rick-review.md`.
+   - **c. Legacy: artifact-first with bare filename.** `docs/rick/reviews/<REVIEW_NAME>/rick-review.md`.
+   - **d. Legacy: original code-review suffix.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md`.
+   - **e. Legacy: issue-N folder.** If branch matches `^([0-9]+)-`, also try `docs/rick/issue-<n>/review/current.md`, `docs/rick/reviews/issue-<n>/issue-<n>-rick-review.md`, then `docs/rick/reviews/issue-<n>/issue-<n>-code-review.md`.
+   - **f. Legacy: pr-N folder.** If a PR is open, also try `docs/rick/pr-<n>/review/current.md`, `docs/rick/reviews/pr-<n>/pr-<n>-rick-review.md`, then `docs/rick/reviews/pr-<n>/pr-<n>-code-review.md`.
+   - **g.** If nothing resolved, print usage and stop.
 4. If a report was found, default `FINDING_REF` to `all` if missing.
 5. Usage on stop:
 
 ```
 Usage: /rick-fix [<report-path>] <finding-ref>
 Examples:
-  /rick-fix docs/rick/reviews/issue-9/issue-9-code-review.md P0-1
+  /rick-fix docs/rick/48-rotate-share-token/review/current.md P0-1
   /rick-fix all-P0
   /rick-fix all
 ```

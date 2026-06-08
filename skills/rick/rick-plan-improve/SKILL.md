@@ -1,7 +1,7 @@
 ---
 name: rick-plan-improve
-description: "Bounded 3-round improvement loop on an existing implementation plan (typically one written by /rick-plan). Takes a path to a plan markdown file, snapshots pre/post versions, critiques against weakness categories (specification gaps, engineering hazards, convention violations, document quality), applies surgical edits, stops on 3 rounds / zero changes / 500-line cap. Use when user invokes /rick-plan-improve, says \"improve this plan\", \"tighten the plan\", or wants to refine an existing plan without rewriting from scratch."
-argument-hint: "<path-to-plan.md>"
+description: "Bounded 3-round improvement loop on an existing implementation plan (typically one written by /rick-plan). Takes a folder name, branch name, or explicit path; snapshots pre/post versions alongside the canonical at docs/rick/<folder>/plan/, critiques against weakness categories (specification gaps, engineering hazards, convention violations, document quality), applies surgical edits, stops on 3 rounds / zero changes / 500-line cap. Use when user invokes /rick-plan-improve, says \"improve this plan\", \"tighten the plan\", or wants to refine an existing plan without rewriting from scratch."
+argument-hint: "[<folder> | <path-to-plan.md>] — empty resolves to current branch"
 disable-model-invocation: true
 ---
 
@@ -9,22 +9,25 @@ disable-model-invocation: true
 
 Bounded improvement loop on a plan file written by `/rick-plan` (or any plan markdown). Reads the canonical plan, critiques against weakness categories, applies surgical edits, snapshots pre and post, up to 3 rounds.
 
-Target plan: `$ARGUMENTS`
+## Resolve the target plan
 
-If `$ARGUMENTS` is empty, tell Morty to give a path and stop. Don't guess.
+`$ARGUMENTS` resolution order, use the first that produces a value:
 
-If the path doesn't exist, stop with `No plan at <path>.` Do not silently fall through to anything else.
+1. **Empty.** Resolve to current branch: `git branch --show-current`, sanitize `/` and spaces to `-`. Target canonical: `docs/rick/<branch>/plan/current.md`.
+2. **Path ending in `.md`.** Treat as literal path. Target canonical = that path. `<plan-dir>` = its parent directory.
+3. **Otherwise.** Treat as a folder name. Target canonical: `docs/rick/<arg>/plan/current.md`.
+
+If the resolved canonical does not exist, stop with `No plan at <path>. Run /rick-plan first.` Do not silently fall through.
 
 ## Before the loop
 
 1. Read the canonical plan file. The actual file, not your memory of it.
 2. Read `CLAUDE.md` (or equivalent project instructions). Half of plan problems are specs that violate conventions already written down six inches from Morty's face.
 3. Determine versioning state:
-   - **Plan slug** = filename minus `.md`. Example: `2026-06-04_1651_auth_rick-plan.md` → plan slug `2026-06-04_1651_auth_rick-plan`.
-   - **Version directory:** `<plan-dir>/versions/<plan-slug>/`. Create if missing. For canonical `/rick-plan` output that means `docs/rick/plans/versions/<plan-slug>/`.
-   - **Next version `N`:** list `versions/<plan-slug>/v*-pre.md`, find the highest, next = highest + 1. If none, this is v1.
-   - **Snapshot pre:** copy the canonical plan → `versions/<plan-slug>/v<N>-pre.md` BEFORE any edits. This is the rollback point. No exceptions, including first runs.
-4. Read `versions/<plan-slug>/VERSIONS.md` if it exists. Records prior changes and rationale. Context, not a shield. To reverse a prior decision: state it, cite evidence its rationale is wrong, explain why the evidence invalidates it. All three or leave it alone.
+   - **Version directory:** `<plan-dir>/` (same dir as the canonical — v1.md, v2.md, etc. sit alongside current.md).
+   - **Next version `N`:** list `<plan-dir>/v*.md`, find the highest integer (ignore `-pre` suffix), next = highest + 1. A canonical written by `/rick-plan` always seeds `v1.md`, so the first improve run is `v2`.
+   - **Snapshot pre:** copy the canonical plan → `<plan-dir>/v<N>-pre.md` BEFORE any edits. This is the rollback point. No exceptions.
+4. Read `<plan-dir>/VERSIONS.md` if it exists. Records prior changes and rationale. Context, not a shield. To reverse a prior decision: state it, cite evidence its rationale is wrong, explain why the evidence invalidates it. All three or leave it alone.
 5. Verify claims in the plan against local files. Skip external URLs unless the claim cannot be verified locally.
 6. Count body lines (excluding frontmatter). Record as the baseline for the size stop condition.
 
@@ -36,7 +39,7 @@ If the path doesn't exist, stop with `No plan at <path>.` Do not silently fall t
 
 ## Loop protocol (up to 3 rounds)
 
-Edit the canonical plan file directly. The pre-loop backup is already safe in `versions/<plan-slug>/v<N>-pre.md`.
+Edit the canonical plan file directly. The pre-loop backup is already safe in `<plan-dir>/v<N>-pre.md`.
 
 Each round:
 
@@ -49,7 +52,7 @@ Each round:
 
 ## After the loop
 
-1. Copy the final plan → `versions/<plan-slug>/v<N>.md` with YAML frontmatter prepended:
+1. Copy the final plan → `<plan-dir>/v<N>.md` with YAML frontmatter prepended:
 
    ```yaml
    ---
@@ -61,12 +64,12 @@ Each round:
    ---
    ```
 
-2. Append a full entry to `versions/<plan-slug>/VERSIONS.md` (create with the header below if missing):
+2. Append a full entry to `<plan-dir>/VERSIONS.md` (create with the header below if missing — but normally `/rick-plan` already created it):
 
    ```markdown
-   # Versions: <plan-slug>
+   # Plan Versions: <folder>
 
-   Append-only history of /rick-plan-improve runs on this plan. Each entry is one bounded loop.
+   Append-only history. v1 is the initial plan; later versions are /rick-plan-improve runs.
    ```
 
    ```
@@ -79,8 +82,10 @@ Each round:
 3. Print exactly:
 
    ```
-   Improved <plan-slug> (v<N>): <stop-condition>. <R> rounds, <C> total changes. Canonical: <plan-path>. History: <versions-dir>/VERSIONS.md
+   Improved <folder> (v<N>): <stop-condition>. <R> rounds, <C> total changes. Canonical: <plan-path>. History: <plan-dir>/VERSIONS.md
    ```
+
+   Where `<folder>` is the grandparent directory name (e.g. for `docs/rick/48-rotate-share-token/plan/current.md`, `<folder>` is `48-rotate-share-token`).
 
 Then stop. Don't recap. Don't offer to revert. The history file has the diff.
 
@@ -122,7 +127,7 @@ Every finding must cite one.
 - Don't add sections for hypothetical future requirements. Every section must prevent a specific, nameable failure.
 - Don't expand the plan into a tutorial or add structure for its own sake. Engineers can read code.
 - Don't soften language. "This will cause silent data loss" beats "this could potentially lead to inconsistencies."
-- Don't touch `versions/` files mid-loop. Only write pre (before round 1) and post (after the final round).
+- Don't touch `v*.md` snapshot files mid-loop. Only write pre (before round 1) and post (after the final round).
 - Don't run the loop on `rick-plan-improve` itself. That's `rick-improve`'s job.
 
 ## Stop condition

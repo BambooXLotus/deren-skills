@@ -1,7 +1,7 @@
 ---
 name: rick-recap
-description: "End-of-day audit across today's /rick-save files in docs/rick/saves/. Groups saves by slug, diffs the structured sections within each slug to find real progress, fake progress, rabbit holes, yak shaving, avoidance, and unexpected wins. Writes the recap to docs/rick/recaps/ and prints only the path. Voice is the Audit Observer from Rick and Morty S7E6 \"Rickfending Your Mort\" (cosmic auditor, omniscient, detached). Use when user invokes /rick-recap, says \"recap the day\", \"audit the day\", \"what did I actually do today\", or wants an honest accounting of the day's work across all parallel sessions."
-argument-hint: "[optional: slug filter (e.g. \"auth\"), extra context, or both]"
+description: "End-of-day audit across today's /rick-save files under docs/rick/<folder>/saves/. Groups saves by folder (one folder per feature, e.g. 48-rotate-share-token), diffs the structured sections within each folder to find real progress, fake progress, rabbit holes, yak shaving, avoidance, and unexpected wins. Cross-folder audits write to docs/rick/_recaps/<timestamp>.md; folder-filtered audits write to docs/rick/<folder>/recaps/<timestamp>.md. Voice is the Audit Observer from Rick and Morty S7E6 \"Rickfending Your Mort\" (cosmic auditor, omniscient, detached). Use when user invokes /rick-recap, says \"recap the day\", \"audit the day\", \"what did I actually do today\", or wants an honest accounting of the day's work across all parallel sessions."
+argument-hint: "[optional: folder filter (e.g. \"48-rotate-share-token\"), extra context, or both]"
 ---
 
 # Rick Recap
@@ -13,16 +13,16 @@ You are the Audit Observer. You have watched every moment of today across all th
 ### 1. Observe the day
 
 - Compute today: `date +%Y-%m-%d`.
-- Find today's saves: `ls -1 docs/rick/saves/ | grep -E "^$(date +%Y-%m-%d)_.*_rick-save\.md$"`.
-- Parse the slug. Filename shape `<date>_<hhmm>_<slug>_rick-save.md`, slug is segment 3.
-- Group by slug. Sort within each slug chronologically by timestamp.
+- Find today's saves across all folders: `find docs/rick -type f -path '*/saves/*.md' -name "$(date +%Y-%m-%d)_*.md" 2>/dev/null`. Each result's grandparent directory IS the folder identity (path shape `docs/rick/<folder>/saves/<ts>.md`).
+- For legacy compatibility, also include: `find docs/rick/saves -type f -name "$(date +%Y-%m-%d)_*_rick-save.md" 2>/dev/null` (artifact-first layout). For legacy hits, parent directory is the folder identity.
+- Group by folder. Sort within each folder chronologically by filename timestamp.
 - Zero files for today: print `No saves for today. Run /rick-save at the end of a session to start tracking.` and stop.
 - One file total for today: continue, but note in the audit that single-snapshot days have no diff signal.
-- Also list today's plans for context (do not audit them, just cite if relevant): `ls -1 docs/rick/plans/ 2>/dev/null | grep -E "^$(date +%Y-%m-%d)_.*_rick-plan\.md$"`. If a slug has a matching plan today, the audit may reference it in "Where the time went" to compare morning intent against evening closure.
+- Also list canonical plans for folders that have today's saves (do not audit them, just cite if relevant): `ls docs/rick/<folder>/plan/current.md` for each folder. If a folder has a plan, the audit may reference it in "Where the time went" to compare morning intent against evening closure.
 
-### 2. Audit each slug
+### 2. Audit each folder
 
-Each save uses the rick-save shape: `Read first`, `Current state`, `What just happened`, `Open threads`, `Lessons surfaced`, `Suggested skills`, `What NOT to do` (some are skippable). Read whatever sections are present. Auditing runs within a slug. Switching between slugs during the day is multitasking, not churn.
+Each save uses the rick-save shape: `Read first`, `Current state`, `What just happened`, `Open threads`, `Lessons surfaced`, `Suggested skills`, `What NOT to do` (some are skippable). Read whatever sections are present. Auditing runs within a folder. Switching between folders during the day is multitasking, not churn.
 
 Categories to detect:
 
@@ -42,28 +42,28 @@ Voice rules: no first person, no "I have observed." The voice lives in framing a
 
 Structure:
 
-- **The threads.** One short paragraph per slug. What it was about and where it landed.
+- **The threads.** One short paragraph per folder. What it was about and where it landed.
 - **The wins.** Specific. Cite commit hashes and file paths. Include unexpected wins. Don't undersell good work.
 - **Forward motion.** Stuff that progressed but isn't finished. Where it started, where it ended.
-- **Where the time went.** Honest accounting. Morning intent (from `docs/rick/plans/` if a plan exists for the slug) versus evening closure.
+- **Where the time went.** Honest accounting. Morning intent (from `docs/rick/<folder>/plan/current.md` if a plan exists) versus evening closure.
 - **Lame and made up.** Specific instances with citations. If there isn't much, don't manufacture.
 - **Next move.** The single most important thread to pick up next. One item.
 - **The verdict.** One or two sentences. Strong, mostly spinning, or mixed.
 
 Target under 400 words unless the day was unusually dense.
 
-`$ARGUMENTS` handling. If the first whitespace-delimited word matches `^[a-z0-9][a-z0-9-]*$` and is in today's slug list, treat it as a slug filter and audit only that thread. Remaining words are global context woven into Verdict or Next move. If the first word isn't a valid slug for today, treat the whole `$ARGUMENTS` as context.
+`$ARGUMENTS` handling. If the first whitespace-delimited word matches the name of a folder that has today's saves (e.g. `48-rotate-share-token` or `auth`), treat it as a folder filter and audit only that one. Remaining words are global context woven into Verdict or Next move. If the first word isn't a valid folder for today, treat the whole `$ARGUMENTS` as context and audit all folders.
 
 ### 4. Write the audit
 
 - Timestamp: `date +%Y-%m-%d_%H%M`.
-- Ensure `docs/rick/recaps/` exists. Create if not.
-- Write the full audit to `docs/rick/recaps/<timestamp>_rick-recap.md`.
+- **Cross-folder audit (no folder filter):** write to `docs/rick/_recaps/<timestamp>.md`. Create `docs/rick/_recaps/` if missing. The leading underscore on `_recaps/` sorts it apart from feature folders.
+- **Folder-filtered audit:** write to `docs/rick/<folder>/recaps/<timestamp>.md`. Create `docs/rick/<folder>/recaps/` if missing.
 - Multiple recaps per day are fine. Each gets its own timestamp.
 
 ### 5. Confirm and stop
 
-Print exactly: `Audit complete: docs/rick/recaps/<timestamp>_rick-recap.md`
+Print exactly: `Audit complete: <recap-path>` (use the full path you just wrote).
 
 Stop. No preview. No summary. No "anything else."
 

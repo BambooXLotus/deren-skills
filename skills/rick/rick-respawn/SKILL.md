@@ -1,12 +1,12 @@
 ---
 name: rick-respawn
-description: Boots the current Claude session from a prior /rick-save briefing in docs/rick/saves/. With no argument loads the most recent Rick across all topics. With a slug loads the most recent Rick matching that slug. With a path loads an explicit file. Reads the briefing, summarizes in 3 to 5 lines including the topic, and reports whether the prior session was in Rick mode (the user invokes /rick-mode themselves if they want to continue in that voice). Use when starting a new session that should pick up where a prior session left off, when user invokes /rick-respawn, says "respawn", "resume from save", "pick up from last time", or "load the briefing".
-argument-hint: [optional: slug (e.g. "auth"), explicit path, or empty for newest across all topics]
+description: Boots the current Claude session from a prior /rick-save briefing in docs/rick/<folder>/saves/. With no argument loads the most recent save across all folders. With a folder name (e.g. "48-rotate-share-token" or "auth") loads the newest save in that folder. With a path loads an explicit file. Reads the briefing, summarizes in 3 to 5 lines including the folder, and reports whether the prior session was in Rick mode (the user invokes /rick-mode themselves if they want to continue in that voice). Use when starting a new session that should pick up where a prior session left off, when user invokes /rick-respawn, says "respawn", "resume from save", "pick up from last time", or "load the briefing".
+argument-hint: '[optional: folder name (e.g. "48-rotate-share-token" or "auth"), explicit path, or empty for newest across all folders]'
 ---
 
 # Rick Respawn
 
-Boots the current session from a prior `/rick-save` briefing. Saves live at `docs/rick/saves/<timestamp>_<slug>_rick-save.md`. Each save is a "Rick" from a parallel timeline.
+Boots the current session from a prior `/rick-save` briefing. Saves live at `docs/rick/<folder>/saves/<timestamp>.md`. Each save is a "Rick" from a parallel timeline; each folder is a feature thread.
 
 ## Protocol
 
@@ -14,26 +14,25 @@ Boots the current session from a prior `/rick-save` briefing. Saves live at `doc
 
 The argument decides what gets loaded.
 
-- **No argument:** find the newest file under `docs/rick/saves/` by filename sort. That is the most recent Rick across all topics.
+- **No argument:** find the newest save across all feature folders. Discovery: `find docs/rick -type f -path '*/saves/*.md' 2>/dev/null | sort -r | head -1`. (The trailing path-segment timestamp sort works because filenames are `YYYY-MM-DD_HHMM.md`.)
 - **Argument contains `/` or ends with `.md`:** treat it as an explicit path. Use it as-is. (Explicit paths can point anywhere, including archived Ricks outside the working tree.)
-- **Argument matches `^[a-z0-9][a-z0-9-]*$`:** treat as a slug. Find the newest file whose name matches `*_<slug>_rick-save.md`.
-
-Discovery command: `ls -1 docs/rick/saves/ | grep '_rick-save\.md$' | sort -r`. First line is newest.
+- **Argument matches `^[a-z0-9][a-z0-9-]*$`:** treat as a folder name. Find the newest file in `docs/rick/<arg>/saves/`: `ls -1 docs/rick/<arg>/saves/ 2>/dev/null | grep '\.md$' | sort -r | head -1`.
 
 Error cases:
 
-- **Saves directory missing or empty:** print `No Ricks found in docs/rick/saves/. Run /rick-save at the end of a session to create one.` and stop.
-- **Slug given, no match:** print `No Rick tagged "<slug>" found. Available slugs: <comma-separated list from filenames>.` and stop.
+- **No rick directory or no saves anywhere:** print `No Ricks found under docs/rick/. Run /rick-save at the end of a session to create one.` and stop.
+- **Folder given, no saves there:** print `No Rick in folder "<folder>". Available folders: <comma-separated list of docs/rick/*/saves/ parents that contain at least one .md>.` and stop.
 - **Explicit path does not exist:** print `No save found at <path>.` and stop.
 
 ### 2. Read the briefing
 
 Read the entire file. Internalize every section present. Current rick-save shape: `Read first`, `Current state`, `What just happened`, `Open threads`, `Lessons surfaced`, `Suggested skills`, `What NOT to do` (some are skippable).
 
-Parse the topic and timestamp from the filename:
+Parse the folder and timestamp from the path:
 
-- Format `<ts>_<slug>_rick-save.md` (4 underscore-delimited parts including the `.md` tail). Slug is the third part.
-- If you encounter a different shape, label as `legacy` in the summary and read whatever sections are present.
+- Path shape (current): `docs/rick/<folder>/saves/<YYYY-MM-DD_HHMM>.md`. Folder is the grandparent directory name.
+- Legacy artifact-first shape: `docs/rick/saves/<folder>/<YYYY-MM-DD_HHMM>_<folder>_rick-save.md` or `docs/rick/saves/<folder>/<YYYY-MM-DD_HHMM>_rick-save.md`. Folder is the parent directory name.
+- Legacy flat-file shape: `docs/rick/saves/<ts>_<slug>_rick-save.md`. Label as `legacy` in the summary and treat the slug as the folder. Read whatever sections are present.
 
 ### 3. Detect the Rick trailer
 
@@ -46,7 +45,7 @@ If the trailer is absent, report `Prior Rick mode: OFF` and behave normally for 
 Print a 3 to 5 line summary in this exact format:
 
 ```
-Resumed Rick "<slug>" from <path> (<timestamp>).
+Resumed Rick "<folder>" from <path> (<timestamp>).
 Situation: <one line, derived from Current state>
 Left off: <one line, the concrete next step — top item from Open threads>
 [Critical: <one item from Open threads or What NOT to do>] (only if something is genuinely blocking)
