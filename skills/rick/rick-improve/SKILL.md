@@ -31,7 +31,7 @@ Read `rick-mode/SKILL.md` from the same root (source or install). It is the gold
 ## Before the loop
 
 1. Read the target SKILL.md. The actual file.
-2. Determine version number: list `<target-dir>/versions/v*-pre.md`, find the highest N, next = N+1. If the directory or files don't exist, this is v1.
+2. Determine version number: list `<target-dir>/versions/v*.md`, find the highest integer (ignore `-pre` suffix), next = N+1. If the directory or files don't exist, this is v1.
 3. Snapshot: copy current SKILL.md → `<target-dir>/versions/v<N>-pre.md`. Create the `versions/` dir if needed.
 4. Append a stub line to `<target-dir>/versions/VERSIONS.md` (create with the header below if missing): `- v<N> | <YYYY-MM-DD> | pre-loop snapshot`
 5. Count body lines (excluding frontmatter). If already over 250, the first round must trim before it can add anything.
@@ -55,7 +55,7 @@ Each round:
 
 ## After the loop
 
-1. Snapshot: copy final SKILL.md → `<target-dir>/versions/v<N>-post.md`
+1. Snapshot: copy final SKILL.md → `<target-dir>/versions/v<N>.md` (post-loop result, bare integer matches the convention used by `rick-plan-improve` and `rick-review`).
 2. Append the full entry to `<target-dir>/versions/VERSIONS.md` using the format below.
 
 ## Weakness categories
@@ -100,8 +100,8 @@ Append-only history of /rick-improve runs on this skill. Each entry is one bound
   - Round 1: <one line, what changed>
   - Round 2: <one line, or "stopped early">
   - Round 3: <one line, or "stopped early">
-  - Restore pre when: <condition that would make v<N>-pre better than v<N>-post>
-  - Restore post when: <condition that would make v<N>-post the new baseline>
+  - Restore pre when: <condition that would make v<N>-pre better than v<N>>
+  - Restore post when: <condition that would make v<N> the new baseline>
 ```
 
 ## Confirm and stop

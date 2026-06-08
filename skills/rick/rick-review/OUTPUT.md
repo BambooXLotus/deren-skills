@@ -5,12 +5,11 @@ The canonical report shape used by `rick-review` Step 8.
 ## File layout
 
 ```
-docs/rick/reviews/<REVIEW_NAME>/
-├── <REVIEW_NAME>-code-review.md       (canonical, overwritten each run)
-└── versions/
-    ├── VERSIONS.md                    (append-only history)
-    ├── v<N>.md                        (snapshot of canonical at vN)
-    └── agents/v<N>/<agent-slug>.md    (per-agent raw output, one file each)
+docs/rick/<REVIEW_NAME>/review/
+├── current.md                         (canonical, overwritten each run)
+├── VERSIONS.md                        (append-only history)
+├── v<N>.md                            (snapshot of canonical at vN)
+└── agents/v<N>/<agent-slug>.md        (per-agent raw output, one file each)
 ```
 
 Agent slugs: `rick-c137`, `doofus-rick`, `smart-morty`, `rick-prime`, `pickle-rick`, `scientist-rick`, `evil-morty`.

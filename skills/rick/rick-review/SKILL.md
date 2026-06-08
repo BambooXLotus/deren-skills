@@ -1,6 +1,6 @@
 ---
 name: rick-review
-description: Multi-agent Rick & Morty council code review for TypeScript projects. Routes between 3 always-run and 4 conditional specialized agents (architecture, patterns, data layer, API contract, security, hygiene, tests) based on the diff scope. Writes a versioned report under docs/rick/reviews/. Use when user invokes /rick-review, says "review the branch", "council review", "review PR <number>", or wants a structured multi-lens code review before merging.
+description: Multi-agent Rick & Morty council code review for TypeScript projects. Routes between 3 always-run and 4 conditional specialized agents (architecture, patterns, data layer, API contract, security, hygiene, tests) based on the diff scope. Writes a versioned report at docs/rick/<folder>/review/current.md (folder = current branch name, e.g. 48-rotate-share-token), with version snapshots and per-agent raw outputs alongside. Use when user invokes /rick-review, says "review the branch", "council review", "review PR <number>", or wants a structured multi-lens code review before merging.
 argument-hint: [PR number, or leave empty to review current branch / staged changes]
 ---
 
@@ -43,33 +43,31 @@ If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD 
 
 ## Step 2 — Resolve `REVIEW_NAME`
 
-This naming must match `rick-fix` Step 1 exactly. Both skills derive it from the same branch state so the read/write round-trip works.
+This naming must match `rick-fix` Step 1 exactly. Both skills derive it from the same branch state so the read/write round-trip works. It also matches `rick-plan`, `rick-save`, and `rick-recap` so a feature's plan / saves / reviews / recaps all live under the same folder name (e.g. `48-rotate-share-token/`).
 
-Priority order:
+Priority order, use the first that produces a value:
 
-1. Issue number in branch name matching `^[0-9]+-` → `issue-<number>` (e.g. `issue-9`)
-2. Sanitized branch name, replace `/` and spaces with `-` → `feature-add-payments`
-3. PR number, only when 1 and 2 didn't resolve (rare — would mean a PR against a branch with neither an issue prefix nor a usable name) → `pr-<number>`
-4. Fallback → `review-<YYYY-MM-DD>`
+1. **Branch name (sanitized).** `git branch --show-current`, replace `/` and spaces with `-`. If non-empty and not in `{main, master, develop}` → `48-rotate-share-token`, `feature-add-payments`. This is the normal path.
+2. **PR number.** Only when on main/develop/detached HEAD AND a PR number was passed → `pr-<number>` (e.g. `pr-213`).
+3. **Date fallback.** `review-<YYYY-MM-DD>` when nothing else resolves.
 
-Rationale: branches and issue numbers are stable. PR numbers can drift (close/reopen, re-push). Both `rick-review` and `rick-fix` start from the local branch, so deriving from branch state guarantees symmetry without coupling to GitHub state. PR number is still used for branch-verification in Step 1, just not as the directory name.
+Rationale: branch names are stable, human-readable, and symmetric with every other rick-* artifact. Full branch (`48-rotate-share-token`) keeps the slug visible, not just the number, so the folder name still tells you what was in the PR a year later. PR number is still used for branch-verification in Step 1; it's just not the directory name.
 
 ## Step 3 — Output Path and Version
 
-Canonical report: `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md` (overwritten each run).
+Canonical report: `docs/rick/<REVIEW_NAME>/review/current.md` (overwritten each run).
 
-Versioning: list `docs/rick/reviews/<REVIEW_NAME>/versions/v*.md`. Next `N` = highest + 1. If no prior versions, this is `v1`. Snapshots use the same convention as `rick-improve`: integer `N`, no decimal, no `-loop` suffix.
+Versioning: list `docs/rick/<REVIEW_NAME>/review/v*.md`. Next `N` = highest + 1. If no prior versions, this is `v1`. Snapshots use the same convention as `rick-improve`: integer `N`, no decimal, no `-loop` suffix.
 
 ```
-docs/rick/reviews/<REVIEW_NAME>/
-├── <REVIEW_NAME>-code-review.md       (canonical, latest)
-└── versions/
-    ├── VERSIONS.md                    (append-only history)
-    ├── v<N>.md                        (snapshot of canonical)
-    └── agents/v<N>/<agent-slug>.md    (per-agent raw output)
+docs/rick/<REVIEW_NAME>/review/
+├── current.md                         (canonical, latest)
+├── VERSIONS.md                        (append-only history)
+├── v<N>.md                            (snapshot of canonical at vN)
+└── agents/v<N>/<agent-slug>.md        (per-agent raw output, one per ran agent)
 ```
 
-Create `docs/rick/reviews/<REVIEW_NAME>/versions/agents/v<N>/` before launching agents.
+Create `docs/rick/<REVIEW_NAME>/review/agents/v<N>/` before launching agents.
 
 ## Step 4 — Changed Files and Per-Agent Slices
 
@@ -138,15 +136,17 @@ Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before
 - `{REVIEW_NAME}` — from Step 2
 - `{SCOPE_LABEL}` — `working-tree` or `committed-only`
 
-| Agent          | Slice                         | Trigger                                                                                                                       |
-| -------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Rick C-137     | `/tmp/rr-diff-broad.txt`      | Always                                                                                                                        |
-| Doofus Rick    | `/tmp/rr-diff-broad.txt`      | Always                                                                                                                        |
-| Smart Morty    | `/tmp/rr-diff-broad.txt`      | Always                                                                                                                        |
-| Rick Prime     | `/tmp/rr-diff-broad.txt`      | New top-level dir added under `src/` or cross-module import changes (grep for `from '\\.\\./[^.]` adds in broad slice)        |
-| Pickle Rick    | `/tmp/rr-diff-data.txt`       | Data slice non-empty                                                                                                          |
-| Scientist Rick | `/tmp/rr-diff-api.txt`        | API slice non-empty                                                                                                           |
-| Evil Morty     | `/tmp/rr-diff-sec.txt`        | Security slice non-empty, or broad slice matches `password\|token\|secret\|jwt\|session\|encrypt`                              |
+| Agent          | Slice                         | Model     | Trigger                                                                                                                       |
+| -------------- | ----------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Rick C-137     | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
+| Doofus Rick    | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
+| Smart Morty    | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
+| Rick Prime     | `/tmp/rr-diff-broad.txt`      | inherit   | New top-level dir added under `src/` or cross-module import changes (grep for `from '\\.\\./[^.]` adds in broad slice)        |
+| Pickle Rick    | `/tmp/rr-diff-data.txt`       | `haiku`   | Data slice non-empty                                                                                                          |
+| Scientist Rick | `/tmp/rr-diff-api.txt`        | `haiku`   | API slice non-empty                                                                                                           |
+| Evil Morty     | `/tmp/rr-diff-sec.txt`        | inherit   | Security slice non-empty, or broad slice matches `password\|token\|secret\|jwt\|session\|encrypt`                              |
+
+**Model column.** Pass `model: "haiku"` on the Agent tool call for agents marked `haiku` (Haiku 4.5 — fast, sufficient for pattern-matching review against documented conventions). Omit the `model` field for agents marked `inherit` so they use the parent session's default (typically Sonnet/Opus); Rick Prime (cross-module architectural impact) and Evil Morty (security exploit reasoning) are the two lenses where reasoning depth materially changes verdicts, so they stay on the stronger model. Net effect: ~5x faster council step on routine PRs (5 of 7 agents on Haiku), with no loss of depth where it matters.
 
 Launch all triggered agents in a single batched Agent tool call with `subagent_type: general-purpose`. Agents not triggered are reported as `Skipped (out of scope)` — not `Clean`.
 
@@ -227,10 +227,10 @@ Re-number rows after kills and demotions. Append a sub-heading in Total Rickall:
 
 All independent — write in one assistant response with parallel tool calls:
 
-- `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md` (canonical)
-- `docs/rick/reviews/<REVIEW_NAME>/versions/v<N>.md` (snapshot of the canonical)
-- `docs/rick/reviews/<REVIEW_NAME>/versions/agents/v<N>/<agent-slug>.md` (one per ran agent)
-- Append to `docs/rick/reviews/<REVIEW_NAME>/versions/VERSIONS.md`:
+- `docs/rick/<REVIEW_NAME>/review/current.md` (canonical)
+- `docs/rick/<REVIEW_NAME>/review/v<N>.md` (snapshot of the canonical)
+- `docs/rick/<REVIEW_NAME>/review/agents/v<N>/<agent-slug>.md` (one per ran agent)
+- Append to `docs/rick/<REVIEW_NAME>/review/VERSIONS.md`:
   ```
   - v<N> | <YYYY-MM-DD> | <SCOPE_LABEL> | P0:<n> P1:<n> P2:<n> P3:<n> | <APPROVED|NEEDS FIXES>
   ```
@@ -243,7 +243,7 @@ See [OUTPUT.md](OUTPUT.md) for the full structure and VERSIONS.md entry format.
 
 ```
 Reviewed <REVIEW_NAME> (v<N>): P0:<n> P1:<n> P2:<n> P3:<n>. Verdict: <APPROVED|NEEDS FIXES>.
-Report: docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md
+Report: docs/rick/<REVIEW_NAME>/review/current.md
 ```
 
 Then stop. No "want me to start fixing the P0s." That's `rick-fix`'s job.

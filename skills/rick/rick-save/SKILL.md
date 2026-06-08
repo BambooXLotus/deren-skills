@@ -1,12 +1,14 @@
 ---
 name: rick-save
-description: Captures the current session's warm thread to docs/rick/saves/ so a future Claude session can resume via /rick-respawn. Auto-gathers git state, picks a one-word topic slug, and writes a dense second-person briefing focused on what is still live right now (not a session recap). Use when user invokes /rick-save, says "save the session", "hand off this thread", "pick a slug and save", or wants the next Claude to pick up exactly where this one is.
-argument-hint: "[optional first word: slug override (e.g. \"auth\", \"tooling\") - else model picks. Rest of arguments: extra focus for the next session]"
+description: Captures the current session's warm thread to docs/rick/<folder>/saves/<timestamp>.md (folder = current branch name) so a future Claude session can resume via /rick-respawn. Auto-gathers git state, writes a dense second-person briefing focused on what is still live right now (not a session recap). Use when user invokes /rick-save, says "save the session", "hand off this thread", or wants the next Claude to pick up exactly where this one is.
+argument-hint: "[optional first word: folder override (only used when not on a feature branch). Rest of arguments: extra focus for the next session]"
 ---
 
 # Rick Save
 
-Session save point. Captures the current warm thread to `docs/rick/saves/<timestamp>_<slug>_rick-save.md` so a future Claude session can pick up exactly where this one left off via `/rick-respawn`.
+Session save point. Captures the current warm thread to `docs/rick/<folder>/saves/<timestamp>.md` so a future Claude session can pick up exactly where this one left off via `/rick-respawn`. `<folder>` is the current branch name (e.g. `48-rotate-share-token`), or a one-word slug fallback when not on a feature branch.
+
+Saves are append-only. Each session adds a new timestamped file under the feature's `saves/` directory. Reviewing the directory shows the full timeline for that feature.
 
 Tighter focus than a generic handoff: the next agent gets what to do *right now*, not a narrative summary of the whole session.
 
@@ -20,23 +22,28 @@ Run all of these. Read actual output, do not assume.
 - `git branch --show-current`
 - `git log -5 --oneline`
 - `git diff --stat $(git merge-base HEAD main 2>/dev/null)..HEAD 2>/dev/null || git diff --stat HEAD~5..HEAD 2>/dev/null`
-- Check `docs/rick/saves/` exists. If not, create it and write `docs/rick/README.md` (template at the bottom of this file) when missing.
+- Check `docs/rick/<folder>/saves/` exists. If not, create it. Write `docs/rick/README.md` (template at the bottom of this file) when missing.
 
 If git commands fail, note under `What NOT to do` (or skip the affected sections and flag the gap).
 
-### 2. Pick the slug
+### 2. Pick the folder
 
-The slug is what makes this save findable later. Multiple parallel saves coexist by slug.
+The folder ties this save to the plan, review, and recap for the same feature.
 
-- If the first whitespace-delimited word of `$ARGUMENTS` matches `^[a-z0-9][a-z0-9-]*$` and is not in the banlist below, use it as the slug. Strip it from `$ARGUMENTS` before using the rest as focus.
-- Otherwise pick a one-word slug from session context. Prefer the domain (`auth`, `billing`, `onboarding`, `tooling`, `migration`) over the activity (`review`, `fix`, `debug`). Branch name is a fallback hint, not authoritative. Session focus wins when they disagree (e.g. an auth branch but you spent the session on Claude tooling: slug is `tooling`).
-- Slug rules: lowercase, alphanumeric plus hyphen, no spaces, no underscores. Single word strongly preferred. Hyphenated allowed when one word genuinely cannot disambiguate (`user-import`, `legacy-migration`). Max 20 characters.
-- Banlist (do not use): `stuff`, `session`, `work`, `code`, `dev`, `misc`, `general`, `task`, `thing`, `update`, `changes`, `wip`, `rick`, `save`. If you almost picked one of these, the slug is too vague and you have not read enough context. Pick again.
+Resolution order, use the first that produces a value:
+
+1. **Branch name.** `git branch --show-current`. If non-empty and not in `{main, master, develop}`, sanitize `/` and spaces to `-`. That is the folder. Example: `48-rotate-share-token` stays as-is.
+2. **Slug override.** If on main/develop/detached HEAD and the first whitespace-delimited word of `$ARGUMENTS` matches `^[a-z0-9][a-z0-9-]*$` and is not in the banlist, use it as the folder. Strip it from `$ARGUMENTS` before using the rest as focus.
+3. **Derived slug.** Pick a one-word slug from session context. Prefer the domain (`auth`, `billing`, `onboarding`, `tooling`, `migration`) over the activity (`review`, `fix`, `debug`).
+
+Slug rules (paths 2 and 3 only): lowercase, alphanumeric plus hyphen, no spaces, no underscores. Single word strongly preferred. Hyphenated allowed when one word genuinely cannot disambiguate (`user-import`, `legacy-migration`). Max 20 characters.
+
+Banlist (slug paths only): `stuff`, `session`, `work`, `code`, `dev`, `misc`, `general`, `task`, `thing`, `update`, `changes`, `wip`, `rick`, `save`. If you almost picked one, the slug is too vague. Pick again.
 
 ### 3. Compute filename
 
 - Timestamp: `date +%Y-%m-%d_%H%M`
-- Path: `docs/rick/saves/<timestamp>_<slug>_rick-save.md`
+- Path: `docs/rick/<folder>/saves/<timestamp>.md`
 
 ### 4. Write the save
 
@@ -44,9 +51,9 @@ Second person, addressed to the next Claude. Direct and dense. No fluff, no plea
 
 Sections in this order:
 
-- **Read first.** One or two sentences. Point at any prior `rick-save` files in `docs/rick/saves/` (same slug, recent timestamps) that cover earlier context. Cite their paths. Do not duplicate their content.
+- **Read first.** One or two sentences. Point at any prior save files in `docs/rick/<folder>/saves/` (recent timestamps) and the canonical plan at `docs/rick/<folder>/plan/current.md` that cover earlier context. Cite their paths. Do not duplicate their content.
 - **Current state.** Branch, HEAD commit (short SHA), working tree status (clean / staged / dirty paths), PR number and state if applicable. Cite exact SHAs.
-- **What just happened.** Bullet list. Deltas since the last referenced save (or this session, if this is the first save for the slug). Cite commit hashes for anything that landed.
+- **What just happened.** Bullet list. Deltas since the last referenced save (or this session, if this is the first save for the folder). Cite commit hashes for anything that landed.
 - **Open threads.** Priority-ordered. Top one is the explicit next move. Each item: what it is, what blocks it, where it lives (file path with line numbers, PR number, branch). The next agent picks the top one and runs.
 - **Lessons surfaced.** Non-obvious things learned this segment that aren't already in `CLAUDE.md` / `CLAUDE.local.md`. Skip the section if there are none.
 - **Suggested skills.** One line per skill, why it fits the open work. Reference by skill name, not invocation syntax. Skip if nothing fits.
@@ -62,7 +69,7 @@ That line is the boot signal `/rick-respawn` reads to report whether the prior s
 
 ### 5. Confirm and stop
 
-Print exactly: `Saved Rick "<slug>": docs/rick/saves/<timestamp>_<slug>_rick-save.md`
+Print exactly: `Saved Rick "<folder>": docs/rick/<folder>/saves/<timestamp>.md`
 
 Stop. No summary. No "anything else."
 
@@ -73,32 +80,46 @@ Stop. No summary. No "anything else."
 - Do not dump file contents. Cite paths and line numbers, next Claude can read them.
 - Do not duplicate content already captured in PRDs, plans, ADRs, issues, commits, prior saves. Reference them by path or URL.
 - Do not speculate. Unknowns belong in Open threads.
-- Remaining `$ARGUMENTS` (after the optional slug is stripped) describes what the next session should focus on. Open threads should prioritise that focus area.
-- Do not create or update any `latest.md` symlink. Saves are discovered by listing `docs/rick/saves/`. Parallel sessions would clobber a symlink.
+- Remaining `$ARGUMENTS` (after the optional folder hint is stripped) describes what the next session should focus on. Open threads should prioritise that focus area.
+- Do not create or update any `latest.md` symlink. Saves are discovered by listing `docs/rick/<folder>/saves/`. Parallel sessions would clobber a symlink.
 
 ## README.md template (write once, on first run only)
 
-If `docs/rick/README.md` does not exist, create it with this content:
+If `docs/rick/README.md` does not exist, create it. Write the content below verbatim — the outer fence below is 4 backticks so the inner 3-backtick fence renders correctly. When you write the file, use 3 backticks (not 4) for the directory tree, and drop this paragraph.
 
-```markdown
+````markdown
 # Rick
 
-Artifacts from the Rick skills. Each one is one warm thread, tagged with a one-word slug so multiple parallel topics coexist.
+Artifacts from the Rick skills. Feature-first layout: each feature gets one top-level folder (branch name when available, e.g. `48-rotate-share-token/`, or a one-word slug fallback). Inside that folder, each artifact type owns a subdirectory.
 
 ## Structure
 
-- `plans/YYYY-MM-DD_HHMM_<slug>_rick-plan.md` is one plan from `/rick-plan` before work starts.
-- `saves/YYYY-MM-DD_HHMM_<slug>_rick-save.md` is one save from `/rick-save` at session end.
-- `recaps/YYYY-MM-DD_HHMM_rick-recap.md` is one end-of-day audit across the day's saves.
-
-All sorted by filename.
+```
+docs/rick/
+  <folder>/                            # one per feature (branch or slug)
+    plan/
+      current.md                       # canonical plan (read this)
+      v1.md, v2-pre.md, v2.md          # version history alongside
+      VERSIONS.md                      # changelog
+    review/
+      current.md                       # canonical review
+      v1.md, v2.md
+      VERSIONS.md
+      agents/v<N>/<agent>.md           # per-agent raw outputs per review version
+    saves/<YYYY-MM-DD_HHMM>.md         # append-only session saves
+    recaps/<YYYY-MM-DD_HHMM>.md        # folder-filtered audits (rare)
+  _recaps/<YYYY-MM-DD_HHMM>.md         # cross-folder daily audits
+```
 
 ## Commands
 
-- `/rick-plan` writes an opinionated plan before any code lands. Numbered steps, decisions (Rick's pick + tradeoff), explicit out-of-scope.
-- `/rick-save` writes the current warm thread for the next session. Picks a slug from session context, or accepts an explicit slug as the first argument.
-- `/rick-respawn` boots from the most recent save. Pass a slug to load a specific one (`/rick-respawn auth`). Pass a path to load an explicit file.
-- `/rick-recap` audits the day's saves across all slugs.
+- `/rick-plan` writes `<folder>/plan/current.md` plus initial `v1.md` and `VERSIONS.md`.
+- `/rick-plan-improve` runs a bounded loop on `current.md`, snapshots `v<N>-pre.md` / `v<N>.md`.
+- `/rick-save` appends a timestamped save to `<folder>/saves/`. Folder defaults to current branch.
+- `/rick-respawn` boots from the most recent save. Pass a folder name (`/rick-respawn 48-rotate-share-token`), a slug, or a path.
+- `/rick-review` writes a multi-agent council review to `<folder>/review/current.md` plus `v<N>.md` and per-agent `agents/v<N>/`.
+- `/rick-fix` reads `<folder>/review/current.md` and resolves findings sequentially.
+- `/rick-recap` audits saves. No argument = cross-folder audit at `_recaps/`. Argument = folder-filtered at `<folder>/recaps/`.
 
-Plans and saves are second person, addressed to the next reader. Old files stay as an audit trail.
-```
+All artifacts are second person, addressed to the next reader. Old files stay as an audit trail.
+````
