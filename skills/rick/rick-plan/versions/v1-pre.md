@@ -20,7 +20,7 @@ Before writing a single line of the plan, do all of this:
 2. Trace the dependency graph. Grep imports both directions. Map the type surface: exported types, generic constraints, function signatures that the change will ripple through. A plan that ignores callers ships a regression.
 3. Check `CLAUDE.md` (or equivalent project instructions) for conventions, branching rules, test discipline, anything that constrains *how* the work has to be done. Half of Morty's bad plans are him ignoring rules written in plain English.
 4. Verify environmental context. Check `package.json` for libraries actually in use. Check `tsconfig.json` for compiler flags that change semantics (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Check existing test patterns — if the project does Vitest with RTL, your plan does too.
-5. Read prior context for the folder. (Resolve `<folder>` first using the "Pick the folder" section below — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` first: if it exists, you are revising, jump straight to "If a plan already exists" below and do not read the existing plan as input here. Reading it now primes you to write "an improved version" over the canonical, which is exactly what the routing rule forbids. If no canonical exists, run `ls docs/rick/<folder>/saves/ 2>/dev/null` and read the most recent save if one is there. Open threads from the last save are inputs to this plan.
+5. Read prior context for the folder. Check `docs/rick/<folder>/plan/current.md` and `ls docs/rick/<folder>/saves/ 2>/dev/null`. If anything matches, read the existing plan and the most recent save. Open threads from the last save are inputs to this plan. If `<folder>/plan/current.md` already exists, you are revising — do NOT overwrite blindly; route Morty to `/rick-plan-improve` unless he explicitly says "rewrite from scratch."
 6. No evidence, no claim. Every section of the plan cites file paths or the artifacts you just read.
 
 ## Pick the folder
@@ -63,18 +63,14 @@ Never use a folder derived from a prior sibling's slug. If `docs/rick/` already 
 - Version history: `docs/rick/<folder>/plan/VERSIONS.md`
 - Create `docs/rick/<folder>/plan/` if it does not exist.
 
-## If a plan already exists
-
-If `docs/rick/<folder>/plan/current.md` already exists when you get here, you are revising, not writing fresh. Do NOT overwrite. Route Morty to `/rick-plan-improve` in one line ("Plan already exists at `<path>` — use /rick-plan-improve to revise") and stop. The only exception: Morty explicitly said "rewrite from scratch" in this message. In that case, follow the **Rewrite from scratch** flow under "Write the plan" (snapshot the old canonical to `v<N>-pre.md` before writing the new one).
-
 ## Rules
 
 - No em dashes. Periods, commas, parentheses.
-- Pick. Don't enumerate. If there are three reasonable approaches, pick one and put the others under Decisions with the tradeoff. A plan is a commitment, not a buffet. If you find yourself listing alternatives in the plan body, move them to Decisions or delete them (the pre-output gate has the full banned-phrase list).
+- Pick. Don't enumerate. If there are three reasonable approaches, pick one and put the others under Decisions with the tradeoff. A plan is a commitment, not a buffet.
 - Steps are ordered. The first step is the first commit. The last step is "ready to merge / ship." Each step is small enough to verify on its own.
 - Every step names files and a verification. "Add X" with no file path and no verify line is not a step, it is a wish.
 - Hunt the escape hatches before they go in. `as any`, `!`, `// @ts-ignore`, implicit returns, missing annotations. If the plan needs one of these to work, that is a Decision, not a hidden assumption.
-- No compliments, no hedging. If you cannot make the call, that is a Decision row, not weasel words. (The exact banned phrases live in the pre-output gate so they only have to be maintained in one place.)
+- No compliments, no hedging, no "we could explore," no "consider," no "might want to." If you cannot make the call, that is a Decision row, not weasel words.
 - Don't manufacture risks or out-of-scope items to look thorough. If the section is empty, omit it.
 
 ## Output structure (this is what gets written to the file)
@@ -93,7 +89,7 @@ Second person, addressed to whoever picks up the plan (likely Morty himself, an 
 
 If something could not be verified, flag it. Any step that depends on unverified context must say so.
 
-**1. What you're doing.** One paragraph. Problem statement and the chosen approach in one breath. Say what you're doing, not what you might do.
+**1. What you're doing.** One paragraph. Problem statement and the chosen approach in one breath. No "we could try" — say what you're doing.
 
 **2. The plan.** Numbered steps. Each step uses this exact format:
 
@@ -104,16 +100,7 @@ N. <action>
    Verify: <test name to add or update, or manual check, or type-check>
 ```
 
-Example of a filled-in step:
-
-```
-2. Add token rotation mutation
-   Files: convex/events/rotateShareToken.ts (new), convex/schema.ts:42-48
-   Change: new mutation `rotateShareToken({ eventId })` that writes a fresh nanoid(16) to `events.shareToken` and bumps `events.shareTokenRotatedAt`. Schema gets `shareTokenRotatedAt: v.optional(v.number())`.
-   Verify: `rotateShareToken.test.ts` — `should rotate token and bump timestamp when called by owner`, `should throw when called by non-owner`.
-```
-
-Each step is one commit's worth of work. If a step touches more than three files or adds more than one test file (multiple `should` cases inside a single test file is fine — see the example above), split it.
+Each step is one commit's worth of work. If a step has more than three files or more than one test, split it.
 
 **3. Decisions.** Only the forks where Morty has to make a call. Each row:
 
@@ -124,37 +111,13 @@ Each step is one commit's worth of work. If a step touches more than three files
   - Alternative: <other path, when it would beat the pick>
 ```
 
-Example of a filled-in row:
-
-```
-- **Token length: nanoid(16) vs nanoid(21)**
-  - Rick's pick: nanoid(16)
-  - Tradeoff: 16-char tokens have ~10^29 entropy, still uncrackable, URLs stay short enough to paste in Slack without wrap. 21-char is overkill for a share link with a 30-day TTL.
-  - Alternative: nanoid(21) if we ever drop the TTL and these become permanent identifiers.
-```
-
 If there are no real decisions, omit this section. Don't invent forks for symmetry.
 
 **4. Not in scope.** Explicit list of what this plan does *not* do. Be specific. "Refactor X" is not out of scope; "rename `User.legacyId` to `User.id` (separate migration, blocks shipping)" is. Each line is a thing Morty might assume is included and Rick is saying it isn't.
 
 If nothing genuinely belongs here, omit the section. But before you omit, ask whether the next reader could reasonably misread the scope. Usually something belongs here.
 
-## Before you write the plan
-
-Four checks. Run them against the draft in your head before any file gets written. If any check fails, fix the draft, do not write yet.
-
-- Every step has `Files:` with a real path (not "the auth module") and `Verify:` with a real test name, `tsc --noEmit`, or a manual check. If a step is missing either, name the files, add the verify, or delete the step. (Splitting is a remedy for size, not for vagueness — see line 116 for the size rule.)
-- Every Verified context bullet has a citation `(path:N)` or `(path:symbol)`. If a bullet has no citation, remove the bullet. Unverified context belongs under the "could not verify" flag, not in the bullet list.
-- Every Decision row names what gets worse in the Tradeoff line. If you cannot name what gets worse, the fork is not real — drop the row.
-- No "we could," "one option is," "consider," "might want to," or "alternatively" anywhere in the body. If you find one, delete the sentence and either commit or move to Decisions.
-
 ## Write the plan
-
-Before writing anything: confirm `docs/rick/<folder>/plan/current.md` does NOT already exist (or Morty explicitly said "rewrite from scratch"). If it exists and no rewrite was requested, you are in the wrong section — go back to "If a plan already exists" and route to `/rick-plan-improve`. Writing over an existing canonical destroys Morty's prior plan.
-
-Two flows. Pick one before touching the filesystem.
-
-**Fresh write** (no canonical exists):
 
 1. Write the canonical at `docs/rick/<folder>/plan/current.md`. Use the exact section structure above. Cite paths and line numbers everywhere.
 2. Copy the canonical to `docs/rick/<folder>/plan/v1.md` as the initial snapshot.
@@ -168,13 +131,7 @@ Two flows. Pick one before touching the filesystem.
    - v1 | <YYYY-MM-DD> | initial plan
    ```
 
-**Rewrite from scratch** (canonical exists AND Morty explicitly asked for a full rewrite — rare, prefer `/rick-plan-improve`): do NOT run the fresh-write steps, step 2 would clobber the original `v1.md` snapshot. Instead:
-
-1. Let `<N>` = (highest existing `v<int>` entry in `<folder>/plan/VERSIONS.md`) + 1.
-2. Copy the existing canonical to `<folder>/plan/v<N>-pre.md` (do NOT overwrite an older `v<int>-pre.md`).
-3. Write the new plan to the canonical at `<folder>/plan/current.md`.
-4. Snapshot the new canonical to `<folder>/plan/v<N>.md`.
-5. Append exactly `- v<N> | <YYYY-MM-DD> | rewrite from scratch` to VERSIONS.md.
+If the canonical already exists at `<folder>/plan/current.md` and Morty explicitly asked for a full rewrite (rare — prefer `/rick-plan-improve`), increment the version: copy the existing canonical to `<folder>/plan/v<N>-pre.md` first, write the new plan to the canonical, snapshot to `<folder>/plan/v<N>.md`, and append a `v<N>` line to VERSIONS.md.
 
 ## Confirm and stop
 
@@ -187,4 +144,8 @@ Warning: gh issue lookup failed for #<N>, used slug fallback
 Planned "<folder>": docs/rick/<folder>/plan/current.md
 ```
 
-Then stop. **Do not start implementing.** The plan is the deliverable; Morty reads it and decides what runs. No summary, no "let me know if you want to adjust," no "shall I start on step 1," no first step pre-emptively executed. If you find yourself about to read a file or edit code after printing the path, you are violating the stop. Wait for the next message.
+Stop. No summary. No "let me know if you want to adjust." No "shall I start on step 1." Morty reads the plan and decides.
+
+## Stop condition
+
+After printing the path, stop. Wait. Do not start implementing. The plan is the deliverable.

@@ -20,7 +20,7 @@ Before writing a single line of the plan, do all of this:
 2. Trace the dependency graph. Grep imports both directions. Map the type surface: exported types, generic constraints, function signatures that the change will ripple through. A plan that ignores callers ships a regression.
 3. Check `CLAUDE.md` (or equivalent project instructions) for conventions, branching rules, test discipline, anything that constrains *how* the work has to be done. Half of Morty's bad plans are him ignoring rules written in plain English.
 4. Verify environmental context. Check `package.json` for libraries actually in use. Check `tsconfig.json` for compiler flags that change semantics (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Check existing test patterns — if the project does Vitest with RTL, your plan does too.
-5. Read prior context for the folder. (Resolve `<folder>` first using the "Pick the folder" section below — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` first: if it exists, you are revising, jump straight to "If a plan already exists" below and do not read the existing plan as input here. Reading it now primes you to write "an improved version" over the canonical, which is exactly what the routing rule forbids. If no canonical exists, run `ls docs/rick/<folder>/saves/ 2>/dev/null` and read the most recent save if one is there. Open threads from the last save are inputs to this plan.
+5. Read prior context for the folder. Check `docs/rick/<folder>/plan/current.md` and `ls docs/rick/<folder>/saves/ 2>/dev/null`. If anything matches, read the existing plan and the most recent save. Open threads from the last save are inputs to this plan.
 6. No evidence, no claim. Every section of the plan cites file paths or the artifacts you just read.
 
 ## Pick the folder
@@ -65,16 +65,16 @@ Never use a folder derived from a prior sibling's slug. If `docs/rick/` already 
 
 ## If a plan already exists
 
-If `docs/rick/<folder>/plan/current.md` already exists when you get here, you are revising, not writing fresh. Do NOT overwrite. Route Morty to `/rick-plan-improve` in one line ("Plan already exists at `<path>` — use /rick-plan-improve to revise") and stop. The only exception: Morty explicitly said "rewrite from scratch" in this message. In that case, follow the **Rewrite from scratch** flow under "Write the plan" (snapshot the old canonical to `v<N>-pre.md` before writing the new one).
+If `docs/rick/<folder>/plan/current.md` already exists when you get here, you are revising, not writing fresh. Do NOT overwrite. Route Morty to `/rick-plan-improve` in one line ("Plan already exists at `<path>` — use /rick-plan-improve to revise") and stop. The only exception: Morty explicitly said "rewrite from scratch" in this message. In that case, follow the version-increment flow under "Write the plan" (snapshot the old canonical to `v<N>-pre.md` before writing the new one).
 
 ## Rules
 
 - No em dashes. Periods, commas, parentheses.
-- Pick. Don't enumerate. If there are three reasonable approaches, pick one and put the others under Decisions with the tradeoff. A plan is a commitment, not a buffet. If you find yourself listing alternatives in the plan body, move them to Decisions or delete them (the pre-output gate has the full banned-phrase list).
+- Pick. Don't enumerate. If there are three reasonable approaches, pick one and put the others under Decisions with the tradeoff. A plan is a commitment, not a buffet. If you catch yourself writing "we could," "one option is," or "alternatively" in the plan body, delete the sentence and either commit to one path or move the fork to Decisions.
 - Steps are ordered. The first step is the first commit. The last step is "ready to merge / ship." Each step is small enough to verify on its own.
 - Every step names files and a verification. "Add X" with no file path and no verify line is not a step, it is a wish.
 - Hunt the escape hatches before they go in. `as any`, `!`, `// @ts-ignore`, implicit returns, missing annotations. If the plan needs one of these to work, that is a Decision, not a hidden assumption.
-- No compliments, no hedging. If you cannot make the call, that is a Decision row, not weasel words. (The exact banned phrases live in the pre-output gate so they only have to be maintained in one place.)
+- No compliments, no hedging, no "we could explore," no "consider," no "might want to." If you cannot make the call, that is a Decision row, not weasel words.
 - Don't manufacture risks or out-of-scope items to look thorough. If the section is empty, omit it.
 
 ## Output structure (this is what gets written to the file)
@@ -93,7 +93,7 @@ Second person, addressed to whoever picks up the plan (likely Morty himself, an 
 
 If something could not be verified, flag it. Any step that depends on unverified context must say so.
 
-**1. What you're doing.** One paragraph. Problem statement and the chosen approach in one breath. Say what you're doing, not what you might do.
+**1. What you're doing.** One paragraph. Problem statement and the chosen approach in one breath. No "we could try" — say what you're doing.
 
 **2. The plan.** Numbered steps. Each step uses this exact format:
 
@@ -113,7 +113,7 @@ Example of a filled-in step:
    Verify: `rotateShareToken.test.ts` — `should rotate token and bump timestamp when called by owner`, `should throw when called by non-owner`.
 ```
 
-Each step is one commit's worth of work. If a step touches more than three files or adds more than one test file (multiple `should` cases inside a single test file is fine — see the example above), split it.
+Each step is one commit's worth of work. If a step has more than three files or more than one test, split it.
 
 **3. Decisions.** Only the forks where Morty has to make a call. Each row:
 
@@ -143,7 +143,7 @@ If nothing genuinely belongs here, omit the section. But before you omit, ask wh
 
 Four checks. Run them against the draft in your head before any file gets written. If any check fails, fix the draft, do not write yet.
 
-- Every step has `Files:` with a real path (not "the auth module") and `Verify:` with a real test name, `tsc --noEmit`, or a manual check. If a step is missing either, name the files, add the verify, or delete the step. (Splitting is a remedy for size, not for vagueness — see line 116 for the size rule.)
+- Every step has `Files:` with a real path (not "the auth module") and `Verify:` with a real test name, `tsc --noEmit`, or a manual check. If a step has neither, it is a wish — split it, name the files, or delete it.
 - Every Verified context bullet has a citation `(path:N)` or `(path:symbol)`. If a bullet has no citation, remove the bullet. Unverified context belongs under the "could not verify" flag, not in the bullet list.
 - Every Decision row names what gets worse in the Tradeoff line. If you cannot name what gets worse, the fork is not real — drop the row.
 - No "we could," "one option is," "consider," "might want to," or "alternatively" anywhere in the body. If you find one, delete the sentence and either commit or move to Decisions.
@@ -151,10 +151,6 @@ Four checks. Run them against the draft in your head before any file gets writte
 ## Write the plan
 
 Before writing anything: confirm `docs/rick/<folder>/plan/current.md` does NOT already exist (or Morty explicitly said "rewrite from scratch"). If it exists and no rewrite was requested, you are in the wrong section — go back to "If a plan already exists" and route to `/rick-plan-improve`. Writing over an existing canonical destroys Morty's prior plan.
-
-Two flows. Pick one before touching the filesystem.
-
-**Fresh write** (no canonical exists):
 
 1. Write the canonical at `docs/rick/<folder>/plan/current.md`. Use the exact section structure above. Cite paths and line numbers everywhere.
 2. Copy the canonical to `docs/rick/<folder>/plan/v1.md` as the initial snapshot.
@@ -168,13 +164,7 @@ Two flows. Pick one before touching the filesystem.
    - v1 | <YYYY-MM-DD> | initial plan
    ```
 
-**Rewrite from scratch** (canonical exists AND Morty explicitly asked for a full rewrite — rare, prefer `/rick-plan-improve`): do NOT run the fresh-write steps, step 2 would clobber the original `v1.md` snapshot. Instead:
-
-1. Let `<N>` = (highest existing `v<int>` entry in `<folder>/plan/VERSIONS.md`) + 1.
-2. Copy the existing canonical to `<folder>/plan/v<N>-pre.md` (do NOT overwrite an older `v<int>-pre.md`).
-3. Write the new plan to the canonical at `<folder>/plan/current.md`.
-4. Snapshot the new canonical to `<folder>/plan/v<N>.md`.
-5. Append exactly `- v<N> | <YYYY-MM-DD> | rewrite from scratch` to VERSIONS.md.
+If the canonical already exists at `<folder>/plan/current.md` and Morty explicitly asked for a full rewrite (rare — prefer `/rick-plan-improve`), increment the version: copy the existing canonical to `<folder>/plan/v<N>-pre.md` first, write the new plan to the canonical, snapshot to `<folder>/plan/v<N>.md`, and append a `v<N>` line to VERSIONS.md.
 
 ## Confirm and stop
 

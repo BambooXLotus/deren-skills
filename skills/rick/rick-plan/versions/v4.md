@@ -20,7 +20,7 @@ Before writing a single line of the plan, do all of this:
 2. Trace the dependency graph. Grep imports both directions. Map the type surface: exported types, generic constraints, function signatures that the change will ripple through. A plan that ignores callers ships a regression.
 3. Check `CLAUDE.md` (or equivalent project instructions) for conventions, branching rules, test discipline, anything that constrains *how* the work has to be done. Half of Morty's bad plans are him ignoring rules written in plain English.
 4. Verify environmental context. Check `package.json` for libraries actually in use. Check `tsconfig.json` for compiler flags that change semantics (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Check existing test patterns — if the project does Vitest with RTL, your plan does too.
-5. Read prior context for the folder. (Resolve `<folder>` first using the "Pick the folder" section below — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` first: if it exists, you are revising, jump straight to "If a plan already exists" below and do not read the existing plan as input here. Reading it now primes you to write "an improved version" over the canonical, which is exactly what the routing rule forbids. If no canonical exists, run `ls docs/rick/<folder>/saves/ 2>/dev/null` and read the most recent save if one is there. Open threads from the last save are inputs to this plan.
+5. Read prior context for the folder. (Resolve `<folder>` first using the "Pick the folder" section below — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` and `ls docs/rick/<folder>/saves/ 2>/dev/null`. If anything matches, read the existing plan and the most recent save. Open threads from the last save are inputs to this plan.
 6. No evidence, no claim. Every section of the plan cites file paths or the artifacts you just read.
 
 ## Pick the folder
@@ -65,7 +65,7 @@ Never use a folder derived from a prior sibling's slug. If `docs/rick/` already 
 
 ## If a plan already exists
 
-If `docs/rick/<folder>/plan/current.md` already exists when you get here, you are revising, not writing fresh. Do NOT overwrite. Route Morty to `/rick-plan-improve` in one line ("Plan already exists at `<path>` — use /rick-plan-improve to revise") and stop. The only exception: Morty explicitly said "rewrite from scratch" in this message. In that case, follow the **Rewrite from scratch** flow under "Write the plan" (snapshot the old canonical to `v<N>-pre.md` before writing the new one).
+If `docs/rick/<folder>/plan/current.md` already exists when you get here, you are revising, not writing fresh. Do NOT overwrite. Route Morty to `/rick-plan-improve` in one line ("Plan already exists at `<path>` — use /rick-plan-improve to revise") and stop. The only exception: Morty explicitly said "rewrite from scratch" in this message. In that case, follow the version-increment flow under "Write the plan" (snapshot the old canonical to `v<N>-pre.md` before writing the new one).
 
 ## Rules
 
@@ -152,10 +152,6 @@ Four checks. Run them against the draft in your head before any file gets writte
 
 Before writing anything: confirm `docs/rick/<folder>/plan/current.md` does NOT already exist (or Morty explicitly said "rewrite from scratch"). If it exists and no rewrite was requested, you are in the wrong section — go back to "If a plan already exists" and route to `/rick-plan-improve`. Writing over an existing canonical destroys Morty's prior plan.
 
-Two flows. Pick one before touching the filesystem.
-
-**Fresh write** (no canonical exists):
-
 1. Write the canonical at `docs/rick/<folder>/plan/current.md`. Use the exact section structure above. Cite paths and line numbers everywhere.
 2. Copy the canonical to `docs/rick/<folder>/plan/v1.md` as the initial snapshot.
 3. Create `docs/rick/<folder>/plan/VERSIONS.md` with this content:
@@ -168,13 +164,7 @@ Two flows. Pick one before touching the filesystem.
    - v1 | <YYYY-MM-DD> | initial plan
    ```
 
-**Rewrite from scratch** (canonical exists AND Morty explicitly asked for a full rewrite — rare, prefer `/rick-plan-improve`): do NOT run the fresh-write steps, step 2 would clobber the original `v1.md` snapshot. Instead:
-
-1. Let `<N>` = (highest existing `v<int>` entry in `<folder>/plan/VERSIONS.md`) + 1.
-2. Copy the existing canonical to `<folder>/plan/v<N>-pre.md` (do NOT overwrite an older `v<int>-pre.md`).
-3. Write the new plan to the canonical at `<folder>/plan/current.md`.
-4. Snapshot the new canonical to `<folder>/plan/v<N>.md`.
-5. Append exactly `- v<N> | <YYYY-MM-DD> | rewrite from scratch` to VERSIONS.md.
+If the canonical already exists at `<folder>/plan/current.md` and Morty explicitly asked for a full rewrite (rare — prefer `/rick-plan-improve`), increment the version: let `<N>` = (highest existing `v<int>` entry in `<folder>/plan/VERSIONS.md`) + 1. Copy the existing canonical to `<folder>/plan/v<N>-pre.md` first (do NOT overwrite an older `v<int>-pre.md`), write the new plan to the canonical, snapshot to `<folder>/plan/v<N>.md`, and append exactly `- v<N> | <YYYY-MM-DD> | rewrite from scratch` to VERSIONS.md.
 
 ## Confirm and stop
 

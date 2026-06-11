@@ -24,7 +24,7 @@ git status --short
 gh pr view --json number,title,headRefName,baseRefName 2>/dev/null
 ```
 
-If `$ARGUMENTS` starts with a number: `gh pr view ${ARGUMENTS%% *} --json number,title,headRefName,baseRefName` (the `%% *` drops trailing tokens like `--committed-only` that Step 4 reads separately; passing the whole `$ARGUMENTS` makes gh error on unknown flags). Capture `baseRefName` as `$BASE`. Stacked PRs diff against their direct parent, not `main`.
+If `$ARGUMENTS` starts with a number: `gh pr view $ARGUMENTS --json number,title,headRefName,baseRefName`. Capture `baseRefName` as `$BASE`. Stacked PRs diff against their direct parent, not `main`.
 
 **Branch verification (PR mode only):** compare `headRefName` from the PR against the current local branch. If they differ, stop and tell the user:
 
@@ -57,7 +57,7 @@ Rationale: branch names are stable, human-readable, and symmetric with every oth
 
 Canonical report: `docs/rick/<REVIEW_NAME>/review/current.md` (overwritten each run).
 
-Versioning: list `docs/rick/<REVIEW_NAME>/review/v*.md`, parse the integer from each `v<N>.md` (ignore `-pre` suffixes), `N` = max integer + 1. Sort by parsed integer, not lexically — `v10.md` sorts before `v2.md` and `tail -1` gives `v9.md` at v10+, silently overwriting an existing snapshot. If no prior versions, this is `v1`. Snapshots use the same convention as `rick-improve`: integer `N`, no decimal, no `-loop` suffix.
+Versioning: list `docs/rick/<REVIEW_NAME>/review/v*.md`. Next `N` = highest + 1. If no prior versions, this is `v1`. Snapshots use the same convention as `rick-improve`: integer `N`, no decimal, no `-loop` suffix.
 
 ```
 docs/rick/<REVIEW_NAME>/review/
@@ -72,8 +72,6 @@ Create `docs/rick/<REVIEW_NAME>/review/agents/v<N>/` before launching agents.
 ## Step 4 — Changed Files and Per-Agent Slices
 
 Auto-rule on scope: if `git status --short` is non-empty AND `--committed-only` was NOT passed, use working-tree scope (catches uncommitted edits). Otherwise committed-only.
-
-Run Step 4's three bash blocks (scope detection, slices, slice cap) as one chained Bash call — shell vars (`$BASE_REF`, `$BROAD`, etc.) set in one block don't persist across separate Bash tool calls, so splitting them empties `$BASE_REF` and silently downgrades every later `git diff` to working-tree-vs-HEAD.
 
 ```bash
 if [ -n "$(git status --short)" ] && ! echo "$ARGUMENTS" | grep -q -- '--committed-only'; then
@@ -164,7 +162,7 @@ If every agent that ran returned `Clean`, skip to Step 7.
 
 For each finding: locate the cited line in the diff slice the agent reviewed. If it appears as a `+` line (added) or `-`/`+` pair (modified) by this PR, it's in scope. If it appears as a context line (no `+`/`-` prefix) or isn't in the slice at all, it existed identically on `$BASE` and is **out of scope** — kill it. Whitespace-only changes don't count as "changed."
 
-### Verification budget (applied to prefix-filter survivors only)
+### Verification budget
 
 | Severity | Allowed verification                                                                          |
 | -------- | --------------------------------------------------------------------------------------------- |
@@ -234,7 +232,7 @@ All independent — write in one assistant response with parallel tool calls:
 - `docs/rick/<REVIEW_NAME>/review/current.md` (canonical)
 - `docs/rick/<REVIEW_NAME>/review/v<N>.md` (snapshot of the canonical)
 - `docs/rick/<REVIEW_NAME>/review/agents/v<N>/<agent-slug>.md` (one per ran agent)
-- Append to `docs/rick/<REVIEW_NAME>/review/VERSIONS.md` via the Edit tool — do NOT use Write (Write would clobber prior v1…v(N-1) review history if the payload contains only the new line):
+- Append to `docs/rick/<REVIEW_NAME>/review/VERSIONS.md`:
   ```
   - v<N> | <YYYY-MM-DD> | <SCOPE_LABEL> | P0:<n> P1:<n> P2:<n> P3:<n> | <APPROVED|NEEDS FIXES>
   ```
