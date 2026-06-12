@@ -150,7 +150,27 @@ Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before
 
 **Model column.** Pass `model: "haiku"` on the Agent tool call for agents marked `haiku` (Haiku 4.5 — fast, sufficient for pattern-matching review against documented conventions). Omit the `model` field for agents marked `inherit` so they use the parent session's default (typically Sonnet/Opus); Rick Prime (cross-module architectural impact) and Evil Morty (security exploit reasoning) are the two lenses where reasoning depth materially changes verdicts, so they stay on the stronger model. Net effect: ~5x faster council step on routine PRs (5 of 7 agents on Haiku), with no loss of depth where it matters.
 
+For N >= 2: build the cross-version deny-list per Step 5.5 below and prepend its preamble to every agent's prompt template before the batch call. Skipped when N=1.
+
 Launch all triggered agents in a single batched Agent tool call with `subagent_type: general-purpose`. Agents not triggered are reported as `Skipped (out of scope)` — not `Clean`.
+
+## Step 5.5 — Cross-version Deny-list (N >= 2 only)
+
+Skipped when N=1. For N >= 2, gather every prior "Killed in Step 7.5" bullet so agents stop re-raising findings the skeptic pass already discarded. Agents are stateless across versions: on `deren-starter`'s `63-sentry-wiring` branch, v11 through v14 each re-killed the same hedge-gated "participantName not asserted in extra-scrub test" finding, burning council budget every round.
+
+```bash
+DENY_LIST=$(awk '/^### Killed in Step 7\.5/{flag=1; next} /^#+ /{flag=0} flag && /^- /' docs/rick/<REVIEW_NAME>/review/v*.md | sort -u)
+```
+
+If `$DENY_LIST` is empty (no prior kills), skip the preamble — there's nothing to suppress. Otherwise prepend exactly this block to every agent's prompt, before the placeholders Step 5 injects:
+
+```
+Prior reviews of this branch killed the following findings via the Step 7.5 Final Skeptic Pass. Do NOT re-raise them unless the cited code has materially changed since the kill. Hedge-gated kills are particularly likely to look novel on re-read; they are not.
+
+<contents of $DENY_LIST, bullets verbatim>
+```
+
+The `sort -u` dedupes kills that recurred across multiple prior versions (the same hedge-gated finding can land four times in a row otherwise). The awk stop condition `/^#+ /` catches any subsequent heading at any level, so the slurp ends at the next `## ` or `### ` boundary.
 
 ## Step 6 — Total Rickall (parasite check)
 
