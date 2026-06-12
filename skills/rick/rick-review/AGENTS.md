@@ -20,6 +20,15 @@ Before launching, inject these placeholders into the prompt:
 - If you find nothing real, return `Clean` and stop. Don't manufacture findings to fill space.
 - If the diff has a `[TRUNCATED at N bytes]` marker, cite from `{CHANGED_FILES_LIST}` for anything past the cut. Don't flag "missing X" if X may have been truncated.
 
+## DON'T FLAG (pattern-level guardrails — every agent)
+
+Four patterns that burn council budget on every round and never survive Step 7.5. Skip the finding entirely; do not even file at P3.
+
+1. **Test gap with no day-zero impact.** If the runtime code is correct today and the gap is only "regression risk if X future thing changes," don't file. Mention in passing if you want; it's not a P-anything bug. (Recurrence: `participantName not asserted in extra-scrub test` killed four rounds in a row on `63-sentry-wiring` v11-v14.)
+2. **Preemptive coverage for hypothetical integration.** Only flag if you can grep an actual call site that exercises the path today. "Before someone adds Y" or "when X gets integrated" is not a real-today bug. (Recurrence: `url.template preemptive for a future TanStack Router integration`, killed v14.)
+3. **Object args could contain X.** Only flag if you can find a real call site that passes X. "If someone logs Y" or "if a future caller includes Z" is not enough. (Recurrence: `breadcrumb args nested objects could contain X`, killed v14.)
+4. **Verify SDK defaults from source, not memory.** When parasite-checking a claim like "the SDK handles X by default," grep `node_modules/.pnpm/<pkg>@<ver>/` instead of trusting prior intuition. Defaults change between minor versions — a v2 review on the same branch trusted memory about Sentry's `sendDefaultPii: false` gating span attributes (it doesn't) and missed a real P1 PII leak.
+
 ## Output format (every agent)
 
 ```markdown
@@ -61,7 +70,7 @@ Look for:
 - Wrong tool for the job: `forEach(async)` (discards the promise), missing `await`, `Promise.all` opportunities being done sequentially, `try { ... } catch (e) {}` swallowing errors
 - Stale type narrowing: code that narrowed to a type that no longer exists or no longer matches the value at that point
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Doofus Rick (always)
 
@@ -77,7 +86,7 @@ Look for:
 - Variable names that lie (`isDeleted` set to `false` to mean active, `count` that's actually an index)
 - `TODO` / `FIXME` / `XXX` comments without an issue link or expiry condition
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Smart Morty (always)
 
@@ -94,7 +103,7 @@ Look for:
 - Conditional branches with no test covering at least one path
 - Loops where the iteration variable can be undefined and isn't guarded
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Rick Prime (conditional — architecture)
 
@@ -112,7 +121,7 @@ Look for:
 - Abstractions added speculatively (a factory or interface with exactly one implementation, no tests, and no second consumer in sight)
 - Abstractions missed: 3+ near-duplicate implementations that should be one shared utility
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Pickle Rick (conditional — data layer)
 
@@ -132,7 +141,7 @@ Look for:
 - Multiple related writes without a transaction wrapper where atomicity matters
 - Raw SQL with string interpolation of user input (injection)
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Scientist Rick (conditional — API contract)
 
@@ -151,7 +160,7 @@ Look for:
 - Public function signatures leaking internal types (a private DB model returned from a public route)
 - Optional vs required confusion: a field marked optional in the schema but always read as required (or vice versa)
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
 
 ## Evil Morty (conditional — security)
 
@@ -171,4 +180,4 @@ Look for:
 - Session handling: tokens in `localStorage` when `sessionStorage` or `httpOnly` cookie would be safer, missing CSRF on mutating routes, long-lived tokens with no rotation
 - Logging that includes secrets, tokens, full request bodies, or PII
 
-Apply shared rules. Output in the shared format.
+Apply shared rules and the DON'T FLAG guardrails. Output in the shared format.
