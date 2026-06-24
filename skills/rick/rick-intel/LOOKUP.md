@@ -6,7 +6,7 @@ The dossier sits at `docs/rick/<folder>/intel/current.md`, where `<folder>` matc
 
 ## Find the dossier (first that hits wins)
 
-1. **Same folder.** `docs/rick/<current-folder>/intel/current.md` where `<current-folder>` is whatever the caller already resolved (sanitized branch name, plan folder, etc.). This is the common case once a branch exists — intel and everything else co-locate.
+1. **Same folder.** `docs/rick/<current-folder>/intel/current.md` where `<current-folder>` is, in priority: (a) whatever the caller has already resolved via PICK-FOLDER / RESOLVE-FOLDER / its own logic; (b) if the caller hasn't resolved a folder yet (the call fires before that step, or the caller doesn't resolve one at all), the sanitized current branch — `git branch --show-current` with `/` and spaces replaced by `-`, skipped if the branch is in `{main, master, develop}`. This is the common case once a branch exists — intel and everything else co-locate.
 2. **AB-id glob.** If the caller knows an AB-id (from `$ARGUMENTS`, branch name, or PR body), scan for any prior intel that mentions it:
    ```bash
    find docs/rick -type f -path '*/intel/current.md' -exec grep -l '<AB-id>' {} \;
