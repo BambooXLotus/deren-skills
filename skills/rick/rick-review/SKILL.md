@@ -57,6 +57,43 @@ Versioning: list `docs/rick/<REVIEW_NAME>/review/v*.md`, parse the integer from 
 
 Output files (full list and shape in Step 8 + OUTPUT.md): `current.md`, `VERSIONS.md`, `v<N>.md`, `agents/v<N>/<agent-slug>.md`. Create `docs/rick/<REVIEW_NAME>/review/agents/v<N>/` before launching agents.
 
+## Step 3.5 — Gather System Context
+
+Before launching agents, collect context they can't safely infer. Each block is gated — skip when its trigger doesn't fire. Hold the bundle as `{SYSTEM_CONTEXT}` for Step 5 agent prompts, and `$PR_INTENT` separately for Step 7.7.
+
+### a) Settled FIXED findings — only when prior versions exist
+
+```bash
+SETTLED_FIXED=$(awk '/✓ FIXED/' docs/rick/<REVIEW_NAME>/review/v*.md 2>/dev/null | sort -u)
+```
+
+If non-empty, include in `{SYSTEM_CONTEXT}`:
+
+```
+Settled decisions from prior reviews of this branch (do NOT recommend reverting without new evidence):
+<contents of $SETTLED_FIXED>
+```
+
+### b) PR description intent — only when a PR was detected in Step 1
+
+PR bodies routinely explain *why* something looks missing — scope splits ("except seed script"), deferred validation, intentional trade-offs. Read once upfront so agents can flag contradictions and Step 7.7 can cross-reference.
+
+```bash
+PR_BODY=$(gh pr view --json body --jq '.body' 2>/dev/null)
+```
+
+If non-empty, extract verbatim text (no rewriting) from these sections:
+
+- `## Summary`
+- `## Security Notes` / `## Security Considerations`
+- `## Performance Notes` / `## Performance Impact`
+- `## Testing Instructions` / `## Testing`
+- `## Deployment Notes` / `## Rollback Plan`
+- `## Additional Context`
+- Any header line matching `WORK ITEM:`
+
+Hold as `$PR_INTENT`. Inject as `{PR_INTENT}` in Step 5. If no PR was detected, both stay empty and Step 7.7 skips the PR body block.
+
 ## Step 4 — Changed Files and Per-Agent Slices
 
 Auto-rule on scope: if `git status --short` is non-empty AND `--committed-only` was NOT passed, use working-tree scope (catches uncommitted edits). Otherwise committed-only.
@@ -114,6 +151,10 @@ shrink /tmp/rr-diff-api.txt   "$API"
 shrink /tmp/rr-diff-sec.txt   "$SEC"
 ```
 
+## Step 4.5 — Shell Pre-Scan
+
+Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces them. Hits are appended directly to the P3 table in Step 7 and injected as `{PRESCAN_FINDINGS}` so the broad-slice agents know to skip these checks.
+
 ## Step 5 — Route the Council (parallel)
 
 Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before launching:
@@ -121,6 +162,9 @@ Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before
 - `{CHANGED_FILES_LIST}` — full `/tmp/rr-files.txt`
 - `{SCOPED_DIFF}` — the agent's slice file from the table below
 - `{CLAUDE_MD_CORE}` — `CLAUDE.md` excerpt (read once, inject all agents)
+- `{SYSTEM_CONTEXT}` — Step 3.5 bundle (settled FIXED + anything else assembled)
+- `{PR_INTENT}` — Step 3.5(b) PR body extract (empty when no PR)
+- `{PRESCAN_FINDINGS}` — Step 4.5 shell-verified nits (broad-slice agents must NOT re-scan for these)
 - `{REVIEW_NAME}` — from Step 2
 - `{SCOPE_LABEL}` — `working-tree` or `committed-only`
 
@@ -143,6 +187,8 @@ Launch all triggered agents in a single batched Agent tool call with `subagent_t
 ## Step 5.5 — Cross-version Deny-list (N >= 2 only)
 
 Skipped when N=1. For N >= 2, gather every prior "Killed in Step 7.5" bullet so agents stop re-raising findings the skeptic pass already discarded. Agents are stateless across versions: on `deren-starter`'s `63-sentry-wiring` branch, v11 through v14 each re-killed the same hedge-gated "participantName not asserted in extra-scrub test" finding, burning council budget every round.
+
+This is the kill-prevention lens (don't re-raise parasites). Step 3.5(a) is the revert-prevention lens (don't undo FIXED decisions). Both ship, they catch different misbehaviors.
 
 ```bash
 DENY_LIST=$(awk '/^### Killed in Step 7\.5/{flag=1; next} /^#+ /{flag=0} flag && /^- /' docs/rick/<REVIEW_NAME>/review/v*.md | sort -u)
@@ -205,6 +251,7 @@ Remove parasites from the report silently. Don't list them.
 1. Dedupe findings only when (a) file matches AND (b) line ranges overlap or are equal (treat `47` and `47-50` as overlapping) AND (c) the Issue text names the same defect (e.g. both "missing await", not "missing await" + "unsafe cast"). Different defects at the same line stay separate. Mark anything flagged by 2+ agents with `**` — cross-cutting confirmation.
 2. Group P0 / P1 / P2 / P3 (CRITICAL / HIGH / MEDIUM / LOW).
 3. Within each tier, sort cross-cutting (`**`) rows to the top.
+4. Append `$PRESCAN` rows (from Step 4.5) directly to the P3 table — shell-verified, no parasite check needed. If a row's `file:line` exactly matches an agent-reported P3 with the same defect, drop the duplicate (keep the shell-verified one — its citation is mechanically guaranteed).
 
 ## Step 7.5 — Final Skeptic Pass
 
@@ -228,6 +275,12 @@ Re-number rows after kills and demotions. The tier counts Step 8 prints to chat 
 ### Killed in Step 7.5 (real, but didn't matter)
 - [one-line summary]: [which check killed it]
 ```
+
+## Step 7.7 — Documented Intent Cross-Reference
+
+Do one final pass over the surviving findings against **documented intent** — the PR description body (`$PR_INTENT` from Step 3.5(b)) and the rick-intel dossier (from Step 1.5). See [INTENT-CROSS-REF.md](INTENT-CROSS-REF.md) for the full demote / strengthen / mitigation / scope-flag rules across both sources.
+
+Skip the whole step if neither `$PR_INTENT` nor an intel dossier exists — no documented intent to cross-reference against. Tier counts Step 8 prints are post-7.7 (after any demotions / strengthenings / removals here).
 
 ## Step 8 — Write Report and Print
 
