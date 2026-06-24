@@ -41,6 +41,10 @@ Never silently review the wrong branch.
 
 If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'`. Fallback to `main` if that fails. Use as `$BASE`.
 
+## Step 1.5 — Intel Lookup
+
+Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read its Story Context + Scope. Hold the AB-id, parent epic title, and one-line scope summary for inclusion in the report header (Step 8). The council agents review the *diff*, not the story — don't inject intel into agent prompts. No intel? Skip silently; the report header omits the story line.
+
 ## Step 2 — Resolve `REVIEW_NAME`
 
 See [RESOLVE-FOLDER.md](RESOLVE-FOLDER.md). Same folder identity threads through `/rick-plan`, `/rick-save`, `/rick-fix`, `/rick-review-comments`, `/rick-recap`.

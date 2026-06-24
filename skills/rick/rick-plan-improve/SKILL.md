@@ -22,14 +22,15 @@ If the resolved canonical does not exist, stop with `No plan at <path>. Run /ric
 ## Before the loop
 
 1. Read the canonical plan file. The actual file, not your memory of it.
-2. Read `CLAUDE.md` (or equivalent project instructions). Half of plan problems are specs that violate conventions already written down six inches from Morty's face.
-3. Determine versioning state:
+2. Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read its Story Context + Findings — they're trust sources for verifying plan claims in step 6 and for spotting **Unverified claim** weakness. Plan and intel divergence (plan asserts X, intel cites Y) is a finding in the round.
+3. Read `CLAUDE.md` (or equivalent project instructions). Half of plan problems are specs that violate conventions already written down six inches from Morty's face.
+4. Determine versioning state:
    - **Version directory:** `<plan-dir>/` (same dir as the canonical — v1.md, v2.md, etc. sit alongside current.md).
    - **Next version `N`:** list `<plan-dir>/v*.md`, find the highest integer (ignore `-pre` suffix), next = highest + 1. A canonical written by `/rick-plan` always seeds `v1.md`, so the first improve run is `v2`.
    - **Snapshot pre:** copy the canonical plan → `<plan-dir>/v<N>-pre.md` BEFORE any edits. This is the rollback point. No exceptions.
-4. Read `<plan-dir>/VERSIONS.md` if it exists. Records prior changes and rationale. Context, not a shield. To reverse a prior decision: state it, cite evidence its rationale is wrong, explain why the evidence invalidates it. All three or leave it alone.
-5. Verify claims in the plan against local files. Skip external URLs unless the claim cannot be verified locally.
-6. Count body lines (excluding frontmatter). Record as the baseline for the size stop condition.
+5. Read `<plan-dir>/VERSIONS.md` if it exists. Records prior changes and rationale. Context, not a shield. To reverse a prior decision: state it, cite evidence its rationale is wrong, explain why the evidence invalidates it. All three or leave it alone.
+6. Verify claims in the plan against local files and the intel dossier (if present). Skip external URLs unless the claim cannot be verified locally.
+7. Count body lines (excluding frontmatter). Record as the baseline for the size stop condition.
 
 ## Stop conditions (first that fires, stop immediately)
 
