@@ -24,6 +24,46 @@ To update later, re-run the same command — the installer will refresh existing
 
 **The loop.** Pick an issue. `/rick-intel <AB-id>` (when there's an ADO work item) gathers the dossier — reads the work item + parent epic, sweeps `vexis-docs/` and `docs/adr/`, writes findings to `<folder>/intel/current.md`. The folder name is **the branch you'd create after reading** — predicted from the ADO title via the same slug rule rick-plan uses for GitHub issues, so `git checkout -b <folder>` later keeps all the feature's artifacts under one roof. `/rick-plan <issue-number>` reads the code (and the intel if present) and writes an opinionated plan to `<folder>/plan/current.md`. You implement against the plan. `/rick-save` writes a dense briefing to `<folder>/saves/<timestamp>.md` and the session ends — that Rick "dies." Tomorrow, `/rick-respawn` boots a fresh Rick from that save with full context of where the last one left off. When the PR's ready, `/rick-review` runs the council; `/rick-fix` resolves their findings with TDD or surgical edits. At day's end, `/rick-recap` audits what actually shipped vs what was just motion. Same `<folder>` threads the whole loop — a feature's intel, plan, saves, reviews, and recaps stay co-located.
 
+**The flow.** Same folder, different artifacts, one feature thread. Solid arrows are the normal path; dashed arrows are optional skips (no ADO story, no need to hand off, no findings).
+
+```mermaid
+flowchart TD
+    Issue["ADO story or GH issue"]:::seed
+    Issue -->|"ADO id"| Intel["/rick-intel"]:::skill
+    Issue -.->|"no ADO"| Plan
+    Intel --> Plan["/rick-plan"]:::skill
+    Plan --> Build["implement"]:::action
+    Build -.-> Save["/rick-save"]:::skill
+    Save -.-> Respawn["/rick-respawn"]:::skill
+    Respawn --> Build
+    Build --> Review["/rick-review"]:::skill
+    Review -->|"findings"| Fix["/rick-fix"]:::skill
+    Review -.->|"APPROVED clean"| Comments
+    Fix --> Comments["/rick-review-comments"]:::skill
+    Fix -.->|"re-review"| Review
+    Comments --> Merge["merge"]:::action
+    Merge -.-> Recap["/rick-recap"]:::skill
+
+    classDef skill fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
+    classDef action fill:#fef3c7,stroke:#92400e,color:#78350f
+    classDef seed fill:#fee2e2,stroke:#991b1b,color:#7f1d1d
+```
+
+Who reads what, who writes what:
+
+| Skill | Reads | Writes |
+| --- | --- | --- |
+| `/rick-intel` | ADO work item + parent epic, `vexis-docs/`, `docs/adr/` | `<folder>/intel/current.md` |
+| `/rick-plan` | intel dossier (if present) + source code + `CLAUDE.md` | `<folder>/plan/current.md`, initial `v1.md` |
+| `/rick-save` | git state + session context | `<folder>/saves/<ts>.md` |
+| `/rick-respawn` | newest `<folder>/saves/<ts>.md` | (boots the next session in place) |
+| `/rick-review` | diff + intel dossier + PR body + prior versions | `<folder>/review/current.md`, `agents/v<N>/*.md` |
+| `/rick-fix` | `<folder>/review/current.md` | source code + FIXED/SKIPPED/BLOCKED markers in the report |
+| `/rick-review-comments` | `<folder>/review/current.md` | `<folder>/review/current-comments.md` (drop-in for the human reviewer) |
+| `/rick-recap` | today's `saves/<ts>.md` across all folders | `<folder>/recaps/<ts>.md` (folder-scoped) or `_recaps/<ts>.md` (cross-folder) |
+
+The meta skills sit outside the loop. `/rick-mode` activates the Rick persona for ad-hoc analysis or pairing — no folder artifact. `/rick-improve` and `/rick-plan-improve` edit the skill prompts and plan files themselves, with their own `versions/` history alongside the target.
+
 **Why this exists.** Working with Claude on a real codebase hits two failure modes: sessions are ephemeral (conversation context dissolves when you close the tab; the next Claude has no idea what was decided), and Claude defaults to agreeable hedging, which is poison for plan critique and PR review. The rick-* skills add (1) an on-disk thread that survives session death so multi-day work doesn't restart from zero, and (2) a brutal-honesty persona that strips the hedging when you need a real opinion. `rick-improve` is meta — it edits the skill prompts themselves, versioned under `skills/rick/<name>/versions/`, so the Ricks can improve their own Rick.
 
 All TypeScript-flavored — no NestJS or TypeORM lock-in.
