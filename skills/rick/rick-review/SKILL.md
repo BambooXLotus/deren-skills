@@ -63,8 +63,6 @@ Before launching agents, collect context they can't safely infer. Each block is 
 
 ### a) Settled FIXED findings — only when prior versions exist
 
-Different lens than Step 5.5's deny-list: 5.5 prevents re-raising findings the skeptic pass *killed* (parasites that didn't matter). This block prevents recommending the *reversion* of findings that were *FIXED* (good decisions already shipped).
-
 ```bash
 SETTLED_FIXED=$(awk '/✓ FIXED/' docs/rick/<REVIEW_NAME>/review/v*.md 2>/dev/null | sort -u)
 ```
@@ -155,7 +153,7 @@ shrink /tmp/rr-diff-sec.txt   "$SEC"
 
 ## Step 4.5 — Shell Pre-Scan
 
-Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces them. Hits are appended directly to the P3 table in Step 7 (already verified — no parasite check) and injected as `{PRESCAN_FINDINGS}` so the broad-slice agents know to skip these checks.
+Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces them. Hits are appended directly to the P3 table in Step 7 and injected as `{PRESCAN_FINDINGS}` so the broad-slice agents know to skip these checks.
 
 ## Step 5 — Route the Council (parallel)
 

@@ -2,14 +2,12 @@
 
 After Step 7.5 kills findings that didn't matter, this step cross-references survivors against **documented intent** — the PR description body (Step 3.5(b)) and the rick-intel dossier (Step 1.5). Both are sources of "what the author / story expected"; findings either align, contradict, or fall outside that expectation.
 
-This is the orchestrator's final filter. No new tool calls, no agent re-launch. Operates on the post-7.5 finding tables and on `$PR_INTENT` / intel summary already in context.
-
 ## When this step fires
 
 - `$PR_INTENT` is non-empty (Step 3.5(b) extracted a PR body), OR
 - Step 1.5 found an intel dossier.
 
-If both are empty, skip Step 7.7 entirely. No documented intent to cross-reference against.
+If both are empty, skip Step 7.7 entirely.
 
 ---
 
@@ -53,7 +51,7 @@ If a finding flags "missing X" and the PR body explicitly carves X out ("except 
 
 ## Intel source — apply when Step 1.5 found a dossier
 
-The dossier carries the story's AC, scope, and cited domain ADRs — what the *upstream story* asked for. Higher-signal than PR body because AC is a committed deliverable, not just author intent for one slice. Where PR body and intel conflict on the same finding, intel wins (the AC is the spec; the PR body is the implementation note).
+The dossier carries the story's AC, scope, and cited domain ADRs — what the *upstream story* asked for.
 
 ### 1. AC contradiction
 
