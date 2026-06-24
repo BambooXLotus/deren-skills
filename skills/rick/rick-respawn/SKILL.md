@@ -28,11 +28,7 @@ Error cases:
 
 Read the entire file. Internalize every section present. Current rick-save shape: `Read first`, `Current state`, `What just happened`, `Open threads`, `Lessons surfaced`, `Suggested skills`, `What NOT to do` (some are skippable).
 
-Parse the folder and timestamp from the path:
-
-- Path shape (current): `docs/rick/<folder>/saves/<YYYY-MM-DD_HHMM>.md`. Folder is the grandparent directory name.
-- Legacy artifact-first shape: `docs/rick/saves/<folder>/<YYYY-MM-DD_HHMM>_<folder>_rick-save.md` or `docs/rick/saves/<folder>/<YYYY-MM-DD_HHMM>_rick-save.md`. Folder is the parent directory name.
-- Legacy flat-file shape: `docs/rick/saves/<ts>_<slug>_rick-save.md`. Label as `legacy` in the summary and treat the slug as the folder. Read whatever sections are present.
+Parse the folder and timestamp from the path: `docs/rick/<folder>/saves/<YYYY-MM-DD_HHMM>.md`. Folder is the grandparent directory name.
 
 ### 3. Detect the Rick trailer
 
@@ -62,7 +58,3 @@ Then stop. Wait for the user's next instruction. Do not start working on the nex
 - Surface at most one Critical item. If nothing is genuinely blocking, omit the Critical line entirely.
 - Do not commit, push, run tests, or take any side effects on respawn. Just absorb and wait.
 - If the briefing references files that no longer exist (deleted, renamed), add a `Drift: <file> not found at expected path` line before Rick mode.
-
-## Stop condition
-
-After printing the summary, stop. Wait for the user.
