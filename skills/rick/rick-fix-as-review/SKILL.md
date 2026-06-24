@@ -28,7 +28,7 @@ Verify:
 - `docs/rick/<REVIEW_NAME>/review/current.md` exists. If missing: `No canonical review at <path>. Run /rick-review first.` Stop.
 - `gh pr view` returned a PR on the current branch. If missing: print usage, stop.
 
-## Step 2 — Pre-flight (mandatory, refuse on failure)
+## Step 2 — Pre-flight
 
 **Check A — working tree must NOT be clean yet.** `git status --short`. If empty: `Working tree is clean. /rick-fix didn't run or already reverted. Nothing to snapshot — stop.`
 
@@ -79,7 +79,7 @@ If `git status --short` is non-empty: `Revert incomplete: <files>. Aborting.` St
 
 ## Step 6 — Build the JSON payload
 
-One `comments[]` entry per FIXED finding. Anchored to an in-diff line. Internal review machinery stripped from every body.
+One `comments[]` entry per FIXED finding. Internal review machinery stripped from every body.
 
 ### Voice rules (strict)
 
@@ -156,7 +156,7 @@ Multi-line shape:
 
 Each `comments[]` entry uses the single-line or multi-line variant above.
 
-**Do NOT include `event`.** Omitting `event` creates a PENDING review (invisible to the PR author until the user submits in the UI). Setting `event: ""` returns 422 — omit the key entirely.
+**Omit `event` entirely.** Its absence is what creates a PENDING review (invisible to PR author until UI submit). Setting `event: ""` returns 422.
 
 Write the payload to `/tmp/rr-as-review-<PR_NUMBER>.json`.
 
@@ -177,7 +177,7 @@ gh api repos/$OWNER_REPO/pulls/<PR_NUMBER>/reviews \
 
 Maximum 3 retry rounds. If still failing, fall back to file-level: anchor every failing comment on the first in-diff line of its file with `Fix at line N` in the body.
 
-## Step 8 — Voice audit (mandatory before printing success)
+## Step 8 — Voice audit
 
 Grep the posted payload for forbidden tokens:
 
