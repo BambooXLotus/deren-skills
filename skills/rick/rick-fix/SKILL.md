@@ -56,8 +56,6 @@ Read `package.json` once. Set `RUNNER`:
 - Else if `jest` in either → `RUNNER="npx jest --no-coverage"`
 - Else → `RUNNER="npm test --"` (project's default; specs passed as positional args)
 
-Read the project for the test file suffix convention. Check `vitest.config.*` / `jest.config.*` / `package.json#jest` for `testMatch` or `testRegex`. If unclear, default to checking both `<base>.test.ts(x)` and `<base>.spec.ts(x)` patterns in step 4c.
-
 ## Step 4 — Fix Loop (sequential)
 
 For each eligible finding, in order:
