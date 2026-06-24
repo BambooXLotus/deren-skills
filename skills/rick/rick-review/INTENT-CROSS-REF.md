@@ -81,13 +81,12 @@ If a finding contradicts a settled ADR that intel cited as a domain anchor:
 
 ## Conflict resolution
 
-Multiple rules can apply to the same finding (e.g. PR body defers AND intel scope excludes). Apply all that fit, take the most aggressive outcome:
+When multiple rules fire on the same finding:
 
-```
-KILL trumps DEMOTE trumps STRENGTHEN
-```
+- **Within a single source** (e.g. two intel rules — AC contradiction AND ADR contradiction on the same finding): take the most aggressive outcome. KILL > DEMOTE > STRENGTHEN.
+- **Across sources** (one PR body rule, one intel rule): **intel wins.** AC is the committed deliverable; the PR body is the author's note about implementation strategy for this slice. PR body deferral doesn't override an AC requirement.
 
-If a finding gets both STRENGTHEN (from AC contradiction) and DEMOTE (from PR body deferral), the STRENGTHEN wins — AC is the spec, PR body's deferral doesn't override the committed deliverable.
+So a finding that gets STRENGTHEN from AC contradiction *and* DEMOTE from PR body deferral ends up STRENGTHENED — the intel source takes precedence over PR body.
 
 ## Output
 
