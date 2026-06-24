@@ -6,11 +6,7 @@ Unlike [`../rick-review/RESOLVE-FOLDER.md`](../rick-review/RESOLVE-FOLDER.md) �
 
 ## Resolution order (use the first that produces a value)
 
-1. **Branch name (gated when an issue number was passed).** `git branch --show-current`. If non-empty and not in `{main, master, develop}`, sanitize by replacing `/` and spaces with `-`. Then **gate**:
-   - If `$ARGUMENTS` first whitespace-delimited word matches `^[0-9]+$` (an issue number), priority 1 fires **only if the branch name contains those digits**. Branch `feat/48-rotate-share-token` for issue 48 → use it. Branch `feature/template-mgmt` for issue 50 → priority 1 doesn't fire; fall through to priority 2 and predict the folder from the issue title. Without this gate, running `/rick-plan 50 do X` while on an unrelated feature branch lands the new plan inside the wrong feature's folder.
-   - If `$ARGUMENTS` has no leading issue number (no arg, or a slug-style arg), priority 1 fires unconditionally — the user is planning whatever branch they're already on.
-
-   Example (gate passes): `48-rotate-share-token` stays as-is; `feature/auth-cleanup` becomes `feature-auth-cleanup`.
+1. **Branch name.** `git branch --show-current`. If non-empty and not in `{main, master, develop}`, sanitize by replacing `/` and spaces with `-`. That is the folder. Example: `48-rotate-share-token` stays as-is; `feature/auth-cleanup` becomes `feature-auth-cleanup`.
 
 2. **Issue-number argument.** Only fires when step 1 did NOT resolve. If the first whitespace-delimited word of `$ARGUMENTS` matches `^[0-9]+$` AND `gh` is on PATH (`command -v gh >/dev/null`) AND the issue exists, run:
 
