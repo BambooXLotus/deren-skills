@@ -1,6 +1,6 @@
 ---
 name: rick-improve
-description: Bounded 3-round critique-and-fix loop on a rick-* skill prompt. Snapshots pre/post versions next to the target. 250-line cap.
+description: Self-improvement loop for any rick-* skill prompt. Bounded 3-round critique-and-fix loop targeting skills/rick/<name>/SKILL.md (or installed equivalent). Snapshots pre/post versions to a versions/ directory next to the target. 250-line cap. Use when user invokes /rick-improve <skill-name>, says "improve rick-plan", "tighten the prompt", or wants to refine a skill prompt without rewriting from scratch.
 argument-hint: <skill-name> (e.g. rick-plan, rick-mode)
 disable-model-invocation: true
 ---
@@ -17,17 +17,16 @@ If `$ARGUMENTS` is empty, tell Morty to give a target skill name and stop. Don't
 
 Look in priority order, use the first match:
 
-1. An absolute path to the skills source repo if Morty's memory, CLAUDE.md, or this conversation references one (e.g. `~/code/deren-skills/skills/rick/$ARGUMENTS/SKILL.md`). Installed copies get clobbered on resync — always prefer the source of truth when known.
-2. `skills/rick/$ARGUMENTS/SKILL.md` (source repo, relative to cwd)
-3. `.claude/skills/$ARGUMENTS/SKILL.md` (installed location, last resort)
+1. `skills/rick/$ARGUMENTS/SKILL.md` (source repo)
+2. `.claude/skills/$ARGUMENTS/SKILL.md` (installed location)
 
-If none exists, list available rick skill directories from whichever root resolved and stop. Don't try to be clever.
+If neither exists, list available rick skill directories from whichever root resolved and stop. Don't try to be clever.
 
 Below, `<target-dir>` is the directory holding the resolved SKILL.md.
 
 ## Reference bar
 
-Read `rick-mode/SKILL.md` from the same root as the resolved target (i.e. the `rick-mode/` sibling of `<target-dir>`). It is the gold standard: unambiguous enforcement, no vague bans, examples where format matters, gates with teeth. Use it as the bar for **every round's** critique. Anything the target does worse than rick-mode is a candidate finding.
+Read `rick-mode/SKILL.md` from the same root (source or install). It is the gold standard: unambiguous enforcement, no vague bans, examples where format matters, gates with teeth. Use it as the bar for round-1 critique. Anything the target does worse than rick-mode is a candidate finding.
 
 ## Before the loop
 
@@ -40,31 +39,17 @@ Read `rick-mode/SKILL.md` from the same root as the resolved target (i.e. the `r
 ## Stop conditions (first one that fires, stop immediately)
 
 1. **3 rounds completed.** Hard cap.
-2. **Round produces zero net-new changes.** Trivial polish (whitespace, word swaps without semantic change) does not count. Say "no improvements found this round" and stop.
+2. **Round produces zero net-new changes.** Say "no improvements found this round" and stop.
 3. **Body exceeds 250 lines.** Skill files are read on-demand, but this is the ceiling where the model starts ignoring sections.
-4. **A finding needs a whole-section rewrite.** That's a different skill (`/rick-plan-improve`), not this one. Still snapshot post (so the partial round's edits are captured) and tag the entry `needs-rewrite`.
 
 ## Loop protocol (repeat up to 3 times)
-
-3 is a cap, not a target. Most skills converge in 1-2 rounds. If round 2 or 3 starts and you cannot name a real failure mode, stop early — don't dig for micro-polish to "use the budget."
 
 Each round:
 
 1. **Read the current file.** The actual file, not your memory of it.
-2. **Critique against the weakness categories below.** Every finding uses this format:
-
-   **[weakness category from list below]**
-   - **Where:** `SKILL.md:<line>` or quoted snippet
-   - **Failure mode:** one sentence naming what the model does wrong because of this
-
-   Example:
-
-   **Vague enforcement**
-   - **Where:** SKILL.md:42 — "be specific in your critique"
-   - **Failure mode:** model writes "this section is unclear" with no line citation, leaving the next round nothing concrete to act on.
-
-3. **Rank problems worst first.** If you can't fill the **Failure mode** line, the problem does not qualify. Skip it.
-4. **Apply surgical fixes.** Edit specific lines, not whole sections. (Whole-section rewrite triggers Stop condition 4.)
+2. **Critique against the weakness categories below.** Cite the line or section that's broken.
+3. **Rank problems worst first.** For each one, name the specific failure mode it causes in one sentence. If you can't name the failure mode, the problem does not qualify. Skip it.
+4. **Apply surgical fixes.** Don't rewrite sections that work.
 5. **Count body lines after edits.** If over 250, stop the loop immediately regardless of round number.
 6. **Report what changed and why.** One line per change. Hold these for the post-loop VERSIONS.md entry.
 
@@ -110,18 +95,13 @@ Append-only history of /rick-improve runs on this skill. Each entry is one bound
 **Post-loop full entry (appended after the loop finishes):**
 
 ```
-- v<N> | <YYYY-MM-DD> | <stop-condition: 3-rounds | zero-changes | over-cap | needs-rewrite>
+- v<N> | <YYYY-MM-DD> | <stop-condition: 3-rounds | zero-changes | over-cap>
   - Round 1: <one line, what changed>
   - Round 2: <one line, or "stopped early">
   - Round 3: <one line, or "stopped early">
   - Restore pre when: <condition that would make v<N>-pre better than v<N>>
   - Restore post when: <condition that would make v<N> the new baseline>
 ```
-
-Restore conditions must name a behavior that would be observably different, not "if this is bad." Examples of good restore conditions:
-
-- `Restore pre when: the new structured-finding format makes rounds 2-3 too rigid and we want freeform critique back`
-- `Restore post when: zero-changes rounds stop happening — confirms the new "trivial polish doesn't count" rule landed correctly`
 
 ## Confirm and stop
 

@@ -9,6 +9,7 @@
     "./skills/rick/rick-improve",
     "./skills/rick/rick-review",
     "./skills/rick/rick-fix",
+    "./skills/rick/rick-review-comments",
     "./skills/rick/rick-recap"
   ]
 }
