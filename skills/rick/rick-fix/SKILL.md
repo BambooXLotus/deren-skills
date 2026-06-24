@@ -20,14 +20,7 @@ If `FINDING_REF` is missing but `REPORT_PATH` ends in `.md`, default `FINDING_RE
 If `REPORT_PATH` is missing, **auto-resolve from the current branch**:
 
 1. Compute `REVIEW_NAME` per [`../rick-review/RESOLVE-FOLDER.md`](../rick-review/RESOLVE-FOLDER.md).
-2. Resolve `REPORT_PATH` in priority order — first that exists wins:
-   - **a. Canonical (current).** `docs/rick/<REVIEW_NAME>/review/current.md`.
-   - **b. Legacy: artifact-first with folder-prefixed filename.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-rick-review.md`.
-   - **c. Legacy: artifact-first with bare filename.** `docs/rick/reviews/<REVIEW_NAME>/rick-review.md`.
-   - **d. Legacy: original code-review suffix.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-code-review.md`.
-   - **e. Legacy: issue-N folder.** If branch matches `^([0-9]+)-`, also try `docs/rick/issue-<n>/review/current.md`, `docs/rick/reviews/issue-<n>/issue-<n>-rick-review.md`, then `docs/rick/reviews/issue-<n>/issue-<n>-code-review.md`.
-   - **f. Legacy: pr-N folder.** If a PR is open, also try `docs/rick/pr-<n>/review/current.md`, `docs/rick/reviews/pr-<n>/pr-<n>-rick-review.md`, then `docs/rick/reviews/pr-<n>/pr-<n>-code-review.md`.
-   - **g.** If nothing resolved, print usage and stop.
+2. `REPORT_PATH` = `docs/rick/<REVIEW_NAME>/review/current.md`. If it doesn't exist, print usage and stop.
 3. If a report was found, default `FINDING_REF` to `all` if missing.
 4. Usage on stop:
 
@@ -63,7 +56,7 @@ Read `package.json` once. Set `RUNNER`:
 - Else if `jest` in either → `RUNNER="npx jest --no-coverage"`
 - Else → `RUNNER="npm test --"` (project's default; specs passed as positional args)
 
-Read the project for the test file suffix convention. Check `vitest.config.*` / `jest.config.*` / `package.json#jest` for `testMatch` or `testRegex`. If unclear, default to checking both `<base>.test.ts(x)` and `<base>.spec.ts(x)` patterns in step 3c.
+Read the project for the test file suffix convention. Check `vitest.config.*` / `jest.config.*` / `package.json#jest` for `testMatch` or `testRegex`. If unclear, default to checking both `<base>.test.ts(x)` and `<base>.spec.ts(x)` patterns in step 4c.
 
 ## Step 4 — Fix Loop (sequential)
 

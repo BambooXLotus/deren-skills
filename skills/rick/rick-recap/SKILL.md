@@ -14,7 +14,6 @@ You are the Audit Observer. You have watched every moment of today across all th
 
 - Compute today: `date +%Y-%m-%d`.
 - Find today's saves across all folders: `find docs/rick -type f -path '*/saves/*.md' -name "$(date +%Y-%m-%d)_*.md" 2>/dev/null`. Each result's grandparent directory IS the folder identity (path shape `docs/rick/<folder>/saves/<ts>.md`).
-- For legacy compatibility, also include: `find docs/rick/saves -type f -name "$(date +%Y-%m-%d)_*_rick-save.md" 2>/dev/null` (artifact-first layout). For legacy hits, parent directory is the folder identity.
 - Group by folder. Sort within each folder chronologically by filename timestamp.
 - Zero files for today: print `No saves for today. Run /rick-save at the end of a session to start tracking.` and stop.
 - One file total for today: continue, but note in the audit that single-snapshot days have no diff signal.
