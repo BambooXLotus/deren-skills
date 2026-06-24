@@ -1,6 +1,6 @@
 ---
 name: rick-fix-as-review
-description: Convert /rick-fix's local edits into a PENDING GitHub PR review with one-click suggestion blocks in neutral reviewer voice. Use when the user wants to deliver rick-fix output as a PR review instead of as a commit. Do NOT fire on plain /rick-fix.
+description: Convert /rick-fix's local edits into a PENDING GitHub PR review with one-click suggestion blocks in neutral reviewer voice.
 argument-hint: "[<REVIEW_NAME>] [<PR_NUMBER>] — both auto-resolve from current branch + gh pr view if omitted"
 disable-model-invocation: true
 ---
@@ -30,15 +30,13 @@ Verify:
 
 ## Step 2 — Pre-flight (mandatory, refuse on failure)
 
-Both checks below must pass before any work happens. The skill is only valid AFTER `/rick-fix` has (a) landed fixes locally and (b) you intend to revert them and ship via PR review instead of commit.
-
 **Check A — working tree must NOT be clean yet.** `git status --short`. If empty: `Working tree is clean. /rick-fix didn't run or already reverted. Nothing to snapshot — stop.`
 
 **Check B — report must show FIXED markers.** `grep -c '✓ FIXED' docs/rick/<REVIEW_NAME>/review/current.md`. If zero: `Report has no ✓ FIXED markers. Run /rick-fix first.`
 
 ## Step 3 — Snapshot the work
 
-Save the local fixes as durable artifacts under `docs/rick/<REVIEW_NAME>/review/`. These persist after the working tree is reverted in Step 5.
+Land the patch + new files under `docs/rick/<REVIEW_NAME>/review/` so they survive the Step 5 revert.
 
 ```bash
 # Patch of all modified tracked files
@@ -55,7 +53,7 @@ Print: `Snapshot saved: docs/rick/<REVIEW_NAME>/review/proposed-fixes.patch + pr
 
 ## Step 4 — Capture post-fix line content
 
-Suggestion blocks mirror the AFTER state. Before reverting, walk every FIXED row in `current.md` and read the cited file's current content so Step 6 can paste it back.
+Suggestion blocks mirror the AFTER state, so capture it before Step 5 reverts the tree.
 
 For each row marked `✓ FIXED`:
 
@@ -156,7 +154,7 @@ Multi-line shape:
 }
 ```
 
-One `comments[]` entry per FIXED finding, shaped per the single-line or multi-line variant above.
+Each `comments[]` entry uses the single-line or multi-line variant above.
 
 **Do NOT include `event`.** Omitting `event` creates a PENDING review (invisible to the PR author until the user submits in the UI). Setting `event: ""` returns 422 — omit the key entirely.
 
@@ -171,7 +169,7 @@ gh api repos/$OWNER_REPO/pulls/<PR_NUMBER>/reviews \
   --input /tmp/rr-as-review-<PR_NUMBER>.json
 ```
 
-**Handle 422s.** GitHub returns `Line could not be resolved` when an anchored line is outside the diff hunks. The error doesn't say which line. Strategy:
+**Handle 422s.** GitHub returns `Line could not be resolved` when an anchored line is outside the diff hunks. The error doesn't say which line.
 
 1. Re-check each anchor's line number against the hunk headers: `git diff origin/$BASE_REF...HEAD -- <file> | grep -E '^@@'`.
 2. For any failure: re-anchor per the Step 6 rules.
