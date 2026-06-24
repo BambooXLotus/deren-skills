@@ -1,6 +1,6 @@
 ---
 name: rick-review
-description: Multi-agent Rick & Morty council code review for TypeScript projects — up to 7 specialized agents review the diff in parallel, writes a versioned report at docs/rick/<folder>/review/current.md. Use before merging a branch, or call with a PR number to review that PR.
+description: Multi-agent Rick & Morty council code review for TypeScript projects. Routes between 3 always-run and 4 conditional specialized agents (architecture, patterns, data layer, API contract, security, hygiene, tests) based on the diff scope. Writes a versioned report at docs/rick/<folder>/review/current.md (folder = current branch name, e.g. 48-rotate-share-token), with version snapshots and per-agent raw outputs alongside. Use when user invokes /rick-review, says "review the branch", "council review", "review PR <number>", or wants a structured multi-lens code review before merging.
 argument-hint: [PR number, or leave empty to review current branch / staged changes]
 ---
 
@@ -43,7 +43,15 @@ If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD 
 
 ## Step 2 — Resolve `REVIEW_NAME`
 
-See [RESOLVE-FOLDER.md](RESOLVE-FOLDER.md). Same folder identity threads through `/rick-plan`, `/rick-save`, `/rick-fix`, `/rick-review-comments`, `/rick-recap`.
+This naming must match `rick-fix` Step 1 exactly. Both skills derive it from the same branch state so the read/write round-trip works. It also matches `rick-plan`, `rick-save`, and `rick-recap` so a feature's plan / saves / reviews / recaps all live under the same folder name (e.g. `48-rotate-share-token/`).
+
+Priority order, use the first that produces a value:
+
+1. **Branch name (sanitized).** `git branch --show-current`, replace `/` and spaces with `-`. If non-empty and not in `{main, master, develop}` → `48-rotate-share-token`, `feature-add-payments`. This is the normal path.
+2. **PR number.** Only when on main/master/develop/detached HEAD AND a PR number was passed → `pr-<number>` (e.g. `pr-213`).
+3. **Date fallback.** `review-<YYYY-MM-DD>` when nothing else resolves.
+
+Rationale: branch names are stable, human-readable, and symmetric with every other rick-* artifact. Full branch (`48-rotate-share-token`) keeps the slug visible, not just the number, so the folder name still tells you what was in the PR a year later. PR number is still used for branch-verification in Step 1; it's just not the directory name.
 
 ## Step 3 — Output Path and Version
 
@@ -51,7 +59,15 @@ Canonical report: `docs/rick/<REVIEW_NAME>/review/current.md` (overwritten each 
 
 Versioning: list `docs/rick/<REVIEW_NAME>/review/v*.md`, parse the integer from each `v<N>.md` (ignore `-pre` suffixes), `N` = max integer + 1. Sort by parsed integer, not lexically — `v10.md` sorts before `v2.md` and `tail -1` gives `v9.md` at v10+, silently overwriting an existing snapshot. If no prior versions, this is `v1`. Snapshots use the same convention as `rick-improve`: integer `N`, no decimal, no `-loop` suffix.
 
-Output files (full list and shape in Step 8 + OUTPUT.md): `current.md`, `VERSIONS.md`, `v<N>.md`, `agents/v<N>/<agent-slug>.md`. Create `docs/rick/<REVIEW_NAME>/review/agents/v<N>/` before launching agents.
+```
+docs/rick/<REVIEW_NAME>/review/
+├── current.md                         (canonical, latest)
+├── VERSIONS.md                        (append-only history)
+├── v<N>.md                            (snapshot of canonical at vN)
+└── agents/v<N>/<agent-slug>.md        (per-agent raw output, one per ran agent)
+```
+
+Create `docs/rick/<REVIEW_NAME>/review/agents/v<N>/` before launching agents.
 
 ## Step 4 — Changed Files and Per-Agent Slices
 
@@ -109,6 +125,8 @@ shrink /tmp/rr-diff-data.txt  "$DATA"
 shrink /tmp/rr-diff-api.txt   "$API"
 shrink /tmp/rr-diff-sec.txt   "$SEC"
 ```
+
+If an agent sees the TRUNCATED marker, they cite from `/tmp/rr-files.txt` rather than flagging "missing X."
 
 ## Step 5 — Route the Council (parallel)
 
