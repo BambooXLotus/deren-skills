@@ -30,7 +30,7 @@ Pick one line at random from [INTROS.md](INTROS.md), substitute `<AB-id>`, print
 
 1. Normalize the AB-id.
 2. Resolve the folder. Intel is almost always run pre-branch (the whole point is research before you build), so the folder name should match **the branch the user will create after reading**. Priority order, first that produces a value:
-   1. `git branch --show-current` returns a feature branch (not in `{main, master, develop}` and non-empty) → sanitize (`/` and spaces → `-`) and use it.
+   1. **Branch-already-cut override.** `git branch --show-current` returns a feature branch (not in `{main, master, develop}` and non-empty) **AND the branch name contains the AB-id digits** (e.g. branch `feat/15920-data-gap` for AB15920) → sanitize (`/` and spaces → `-`) and use it. The digit-substring check is mandatory — without it, running `/rick-intel AB15920` while sitting on `feature/WP-FE7-Template-Management` lands the dossier inside the unrelated feature's folder. If you're on a feature branch for a *different* story, priority 1 doesn't fire.
    2. **Predict the branch name.** Fetch ADO title cheaply:
       ```bash
       az boards work-item show --id <digits> --org https://dev.azure.com/VizyFintech --query 'fields."System.Title"' -o tsv
