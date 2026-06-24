@@ -16,12 +16,13 @@ If `$ARGUMENTS` is empty after the optional first-word folder hint is stripped (
 
 Before writing a single line of the plan, do all of this:
 
-1. Read every file relevant to the work. Not a summary. The actual file. If Morty gave you a path, start there. Otherwise identify the entry point from the request (the function, the feature, the module mentioned) and read it.
-2. Trace the dependency graph. Grep imports both directions. Map the type surface: exported types, generic constraints, function signatures that the change will ripple through. A plan that ignores callers ships a regression.
-3. Check `CLAUDE.md` (or equivalent project instructions) for conventions, branching rules, test discipline, anything that constrains *how* the work has to be done. Half of Morty's bad plans are him ignoring rules written in plain English.
-4. Verify environmental context. Check `package.json` for libraries actually in use. Check `tsconfig.json` for compiler flags that change semantics (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Check existing test patterns — if the project does Vitest with RTL, your plan does too.
-5. Read prior context for the folder. (Resolve `<folder>` first per [PICK-FOLDER.md](PICK-FOLDER.md) — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` first: if it exists, you are revising, jump straight to "If a plan already exists" below and do not read the existing plan as input here. Reading it now primes you to write "an improved version" over the canonical, which is exactly what the routing rule forbids. If no canonical exists, run `ls docs/rick/<folder>/saves/ 2>/dev/null` and read the most recent save if one is there. Open threads from the last save are inputs to this plan.
-6. No evidence, no claim. Every section of the plan cites file paths or the artifacts you just read.
+1. Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read it before the source-code sweep. Its Story Context, Scope, and Findings are direct planning inputs — trust the cites and skip re-grepping `vexis-docs/` or `docs/adr/` for terms intel already covered. No intel? Fall through.
+2. Read every file relevant to the work. Not a summary. The actual file. If Morty gave you a path, start there. Otherwise identify the entry point from the request (the function, the feature, the module mentioned, or the build targets from intel) and read it.
+3. Trace the dependency graph. Grep imports both directions. Map the type surface: exported types, generic constraints, function signatures that the change will ripple through. A plan that ignores callers ships a regression.
+4. Check `CLAUDE.md` (or equivalent project instructions) for conventions, branching rules, test discipline, anything that constrains *how* the work has to be done. Half of Morty's bad plans are him ignoring rules written in plain English.
+5. Verify environmental context. Check `package.json` for libraries actually in use. Check `tsconfig.json` for compiler flags that change semantics (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Check existing test patterns — if the project does Vitest with RTL, your plan does too.
+6. Read prior context for the folder. (Resolve `<folder>` first per [PICK-FOLDER.md](PICK-FOLDER.md) — this step depends on it.) Check `docs/rick/<folder>/plan/current.md` first: if it exists, you are revising, jump straight to "If a plan already exists" below and do not read the existing plan as input here. Reading it now primes you to write "an improved version" over the canonical, which is exactly what the routing rule forbids. If no canonical exists, run `ls docs/rick/<folder>/saves/ 2>/dev/null` and read the most recent save if one is there. Open threads from the last save are inputs to this plan.
+7. No evidence, no claim. Every section of the plan cites file paths or the artifacts you just read.
 
 ## Pick the folder
 

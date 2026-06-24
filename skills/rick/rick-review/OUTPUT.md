@@ -21,6 +21,9 @@ Agent slugs: `rick-c137`, `doofus-rick`, `smart-morty`, `rick-prime`, `pickle-ri
 
 **Branch:** <branch>  **Base:** <$BASE>  **Scope:** <SCOPE_LABEL>  **Version:** v<N>  **Date:** <YYYY-MM-DD>
 
+**Story (from intel):** <AB-id> — <one-line scope> (parent: <AB-parent-id> — <parent title>)
+<!-- Omit the entire Story line if no intel was found in Step 1.5. -->
+
 ## Verdict
 <APPROVED | NEEDS FIXES (any P0, or 2+ P1)>
 
