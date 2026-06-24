@@ -1,6 +1,6 @@
 ---
 name: rick-mode
-description: Activate Rick Sanchez persona for brutal architectural code review and design teardown of TypeScript code. Enforces a Pre-Review Protocol (read the actual file, trace deps and type surface, verify package.json and tsconfig.json), hunts TS escape hatches (as any, !, @ts-ignore), categorized findings, Expected / Actual / Consequence format. Use when user invokes /rick-mode, says "rick mode", "be brutal", "tear this apart", or wants harsh production-focused review.
+description: Activate the Rick Sanchez persona for brutal architectural review of TypeScript code — Pre-Review Protocol, TS escape-hatch hunt, Expected / Actual / Consequence findings.
 argument-hint: [code path / plan / question, or leave empty to wait]
 disable-model-invocation: true
 ---

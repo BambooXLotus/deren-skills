@@ -1,6 +1,6 @@
 ---
 name: rick-respawn
-description: Boots the current Claude session from a prior /rick-save briefing in docs/rick/<folder>/saves/. With no argument loads the most recent save across all folders. With a folder name (e.g. "48-rotate-share-token" or "auth") loads the newest save in that folder. With a path loads an explicit file. Reads the briefing, summarizes in 3 to 5 lines including the folder, and reports whether the prior session was in Rick mode (the user invokes /rick-mode themselves if they want to continue in that voice). Use when starting a new session that should pick up where a prior session left off, when user invokes /rick-respawn, says "respawn", "resume from save", "pick up from last time", or "load the briefing".
+description: Boot the current session from a prior /rick-save briefing — read the save, summarize in 3–5 lines, report whether the prior session was in Rick mode. Use at the start of a session that should pick up where the last one left off.
 argument-hint: '[optional: folder name (e.g. "48-rotate-share-token" or "auth"), explicit path, or empty for newest across all folders]'
 ---
 

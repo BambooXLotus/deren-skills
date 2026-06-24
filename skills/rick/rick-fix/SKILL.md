@@ -1,6 +1,6 @@
 ---
 name: rick-fix
-description: Reads a rick-review report, resolves a finding ref, and implements fixes sequentially. Uses /tdd for behavioral findings (write failing test first), direct fix for structural findings. Runs affected tests after each fix. Updates the report with FIXED / SKIPPED / BLOCKED markers. Use when user invokes /rick-fix, says "fix the findings", "implement the P0s", or has a rick-review report ready to resolve.
+description: Resolve findings from a rick-review report sequentially — TDD-route behavioral findings, direct-edit structural ones, mark FIXED / SKIPPED / BLOCKED.
 argument-hint: "[<report-path>] <finding-ref> — ref: P0-1 | all-P0 | all-P1 | all (report path auto-resolves from branch if omitted)"
 disable-model-invocation: true
 ---
@@ -17,14 +17,10 @@ Valid refs: `P0-1`, `P1-3`, etc. (specific row), or `all-P0`, `all-P1`, `all-P2`
 
 If `FINDING_REF` is missing but `REPORT_PATH` ends in `.md`, default `FINDING_REF` to `all`.
 
-If `REPORT_PATH` is missing, **auto-resolve from the current branch** using the same algorithm as `rick-review` Step 2 (kept in sync — drift between these two breaks the round-trip):
+If `REPORT_PATH` is missing, **auto-resolve from the current branch**:
 
-1. `git branch --show-current`
-2. Compute `REVIEW_NAME` by priority:
-   - Branch non-empty and not in `{main, master, develop}` → sanitized branch name (replace `/` and spaces with `-`) → e.g. `48-rotate-share-token`, `feature-add-payments`
-   - Else, if a PR is open for this branch (`gh pr view --json number 2>/dev/null`) → `pr-<number>`
-   - Else fallback → `review-<YYYY-MM-DD>`
-3. Resolve `REPORT_PATH` in priority order — first that exists wins:
+1. Compute `REVIEW_NAME` per [`../rick-review/RESOLVE-FOLDER.md`](../rick-review/RESOLVE-FOLDER.md).
+2. Resolve `REPORT_PATH` in priority order — first that exists wins:
    - **a. Canonical (current).** `docs/rick/<REVIEW_NAME>/review/current.md`.
    - **b. Legacy: artifact-first with folder-prefixed filename.** `docs/rick/reviews/<REVIEW_NAME>/<REVIEW_NAME>-rick-review.md`.
    - **c. Legacy: artifact-first with bare filename.** `docs/rick/reviews/<REVIEW_NAME>/rick-review.md`.
@@ -32,8 +28,8 @@ If `REPORT_PATH` is missing, **auto-resolve from the current branch** using the 
    - **e. Legacy: issue-N folder.** If branch matches `^([0-9]+)-`, also try `docs/rick/issue-<n>/review/current.md`, `docs/rick/reviews/issue-<n>/issue-<n>-rick-review.md`, then `docs/rick/reviews/issue-<n>/issue-<n>-code-review.md`.
    - **f. Legacy: pr-N folder.** If a PR is open, also try `docs/rick/pr-<n>/review/current.md`, `docs/rick/reviews/pr-<n>/pr-<n>-rick-review.md`, then `docs/rick/reviews/pr-<n>/pr-<n>-code-review.md`.
    - **g.** If nothing resolved, print usage and stop.
-4. If a report was found, default `FINDING_REF` to `all` if missing.
-5. Usage on stop:
+3. If a report was found, default `FINDING_REF` to `all` if missing.
+4. Usage on stop:
 
 ```
 Usage: /rick-fix [<report-path>] <finding-ref>

@@ -1,6 +1,6 @@
 ---
 name: rick-recap
-description: "End-of-day audit across today's /rick-save files under docs/rick/<folder>/saves/. Groups saves by folder (one folder per feature, e.g. 48-rotate-share-token), diffs the structured sections within each folder to find real progress, fake progress, rabbit holes, yak shaving, avoidance, and unexpected wins. Cross-folder audits write to docs/rick/_recaps/<timestamp>.md; folder-filtered audits write to docs/rick/<folder>/recaps/<timestamp>.md. Voice is the Audit Observer from Rick and Morty S7E6 \"Rickfending Your Mort\" (cosmic auditor, omniscient, detached). Use when user invokes /rick-recap, says \"recap the day\", \"audit the day\", \"what did I actually do today\", or wants an honest accounting of the day's work across all parallel sessions."
+description: "End-of-day audit across today's /rick-save files — diffs the structured sections within each feature folder to grade real progress vs rabbit holes, yak shaving, and avoidance. Use when the user wants an honest accounting of the day's work."
 argument-hint: "[optional: folder filter (e.g. \"48-rotate-share-token\"), extra context, or both]"
 ---
 

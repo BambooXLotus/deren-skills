@@ -1,6 +1,6 @@
 ---
 name: rick-save
-description: Captures the current session's warm thread to docs/rick/<folder>/saves/<timestamp>.md (folder = current branch name) so a future Claude session can resume via /rick-respawn. Auto-gathers git state, writes a dense second-person briefing focused on what is still live right now (not a session recap). Use when user invokes /rick-save, says "save the session", "hand off this thread", or wants the next Claude to pick up exactly where this one is.
+description: Save the current session's warm thread to docs/rick/<folder>/saves/<timestamp>.md so a future Claude can resume via /rick-respawn. Use when the user wants to hand off this thread to the next session.
 argument-hint: "[optional first word: folder override (only used when not on a feature branch). Rest of arguments: extra focus for the next session]"
 ---
 
