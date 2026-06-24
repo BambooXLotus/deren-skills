@@ -30,6 +30,7 @@ All TypeScript-flavored — no NestJS or TypeORM lock-in.
 
 | Skill | Description |
 | --- | --- |
+| `rick-intel` | Gather research on an ADO work item. Reads the work item + parent epic, sweeps `vexis-docs/` and `docs/adr/` for matching domain anchors and keyword hits, writes a per-story dossier to `docs/rick/<AB-id>/intel/current.md`. Posts an HTML disclaimer comment back to ADO and links to bd if installed. Idempotent — re-runs without `--refresh` are free. Pure research, no code. Sister of `rick-plan`. |
 | `rick-plan` | Plan a piece of work in Rick's voice. Reads the code first, writes an opinionated numbered plan to `docs/rick/<folder>/plan/current.md`, surfaces decisions (with Rick's pick + tradeoff), and an explicit out-of-scope list. |
 | `rick-plan-improve` | Bounded 3-round improvement loop on the canonical plan. Snapshots pre/post alongside the canonical at `docs/rick/<folder>/plan/v<N>-pre.md` and `v<N>.md`. Critiques against weakness categories (specification gaps, engineering hazards, convention violations, document quality), surgical edits only, 500-line cap. Explicit invocation only. Pairs with `rick-plan` like `rick-fix` pairs with `rick-review`. |
 | `rick-save` | Captures the current warm thread as `docs/rick/<folder>/saves/<ts>.md`. Folder = current branch name. Writes a dense second-person briefing for the next session. |
