@@ -7,9 +7,7 @@ disable-model-invocation: true
 
 # rick-fix-as-review
 
-Bridges `/rick-fix` → GitHub pending PR review. After `/rick-fix` has landed all fixes locally on a PR branch (typically someone else's PR you're reviewing), this skill snapshots the work to `docs/rick/<REVIEW_NAME>/review/`, reverts the tree, builds a single `gh api` payload with `suggestion` blocks anchored on in-diff lines, posts as **PENDING** (invisible to the PR author until the user submits in the UI), and prints the URL.
-
-The PR author sees only neutral reviewer voice — no Rick/Morty/Council/v-numbers/P0-P3/Step-7.5 jargon leaks through.
+Bridges `/rick-fix` → GitHub pending PR review.
 
 ## Quick start
 
@@ -32,7 +30,7 @@ Verify:
 
 ## Step 2 — Pre-flight (mandatory, refuse on failure)
 
-The skill is only valid AFTER `/rick-fix` has (a) landed fixes locally and (b) you intend to revert them and ship via PR review instead of commit. Both checks must pass before any work happens.
+Both checks below must pass before any work happens. The skill is only valid AFTER `/rick-fix` has (a) landed fixes locally and (b) you intend to revert them and ship via PR review instead of commit.
 
 **Check A — working tree must NOT be clean yet.** `git status --short`. If empty: `Working tree is clean. /rick-fix didn't run or already reverted. Nothing to snapshot — stop.`
 
@@ -154,11 +152,11 @@ Multi-line shape:
 {
   "commit_id": "<HEAD_SHA from Step 1>",
   "body": "<≤ 2-sentence neutral summary>",
-  "comments": [
-    /* one entry per FIXED finding */
-  ]
+  "comments": [ ... ]
 }
 ```
+
+One `comments[]` entry per FIXED finding, shaped per the single-line or multi-line variant above.
 
 **Do NOT include `event`.** Omitting `event` creates a PENDING review (invisible to the PR author until the user submits in the UI). Setting `event: ""` returns 422 — omit the key entirely.
 
