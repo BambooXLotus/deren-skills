@@ -1,6 +1,6 @@
 # Intel file output structure (rick-intel)
 
-This is what gets written to `docs/rick/<AB-id>/intel/current.md`.
+This is what gets written to `docs/rick/<folder>/intel/current.md`, where `<folder>` is the branch name (when on a feature branch) or the predicted branch name `<digits>-<title-slug>` (when run pre-branch).
 
 ## Section order
 

@@ -1,12 +1,12 @@
 ---
 name: rick-intel
-description: Gather research on an ADO work item — read the work item + parent epic, sweep vexis-docs and ADRs, write a per-story intel file to docs/rick/<AB-id>/intel/current.md. Use when the user hands you an AB number to research before planning.
+description: Gather research on an ADO work item — read the work item + parent epic, sweep vexis-docs and ADRs, write a per-story intel file to docs/rick/<folder>/intel/current.md. Use when the user hands you an AB number to research before planning.
 argument-hint: "<AB-id> [--refresh]"
 ---
 
 # Rick Intel
 
-_burp_ Before you write a line of code, you read the dossier, Morty. This skill reads the ADO work item, climbs to the parent epic, sweeps vexis-docs and ADRs, and writes a story-scoped intel file at `docs/rick/<AB-id>/intel/current.md`.
+_burp_ Before you write a line of code, you read the dossier, Morty. This skill reads the ADO work item, climbs to the parent epic, sweeps vexis-docs and ADRs, and writes a story-scoped intel file at `docs/rick/<folder>/intel/current.md`.
 
 Sister of `rick-plan`. Plan tells you what to build. Intel tells you what's already known. Run intel first.
 
@@ -29,14 +29,23 @@ Pick one line at random from [INTROS.md](INTROS.md), substitute `<AB-id>`, print
 ## Pre-flight
 
 1. Normalize the AB-id.
-2. Compute paths:
-   - Folder: `docs/rick/<AB-id>/intel/`
-   - Canonical: `docs/rick/<AB-id>/intel/current.md`
-3. Check if canonical exists:
+2. Resolve the folder. Intel is almost always run pre-branch (the whole point is research before you build), so the folder name should match **the branch the user will create after reading**. Priority order, first that produces a value:
+   1. `git branch --show-current` returns a feature branch (not in `{main, master, develop}` and non-empty) → sanitize (`/` and spaces → `-`) and use it.
+   2. **Predict the branch name.** Fetch ADO title cheaply:
+      ```bash
+      az boards work-item show --id <digits> --org https://dev.azure.com/VizyFintech --query 'fields."System.Title"' -o tsv
+      ```
+      Slugify per `rick-plan/PICK-FOLDER.md` step 2: truncate at the first em-dash / en-dash / ` - `; lowercase; replace non-`[a-z0-9]` runs with `-`; trim trailing hyphens; cap at 40 chars without cutting mid-segment. Result: `<digits>-<title-slug>` (e.g. `16289-rotate-share-link-ui`).
+   3. ADO title fetch failed → fall back to `ab<digits>` (e.g. `ab16289`) and record an open question.
+3. Compute paths:
+   - Folder: `docs/rick/<folder>/intel/`
+   - Canonical: `docs/rick/<folder>/intel/current.md`
+4. **Glob check for prior intel** at this AB-id (handles the case where intel was written before but the folder name has since drifted, e.g. a different branch was created later): `find docs/rick -type f -path '*/intel/current.md' -exec grep -l '<AB-id>' {} \;`. If a single match exists at a different path, treat it as the canonical instead (don't write a second copy under the predicted name). If multiple match, print them and stop — Morty resolves.
+5. Check if canonical exists:
    - Exists, no `--refresh` → print path + the file's `Last gathered:` line + the one-line summary footer, stop. Do not re-fetch.
    - Exists, `--refresh` → load existing findings into memory for diff (see Refresh).
-   - Does not exist → fresh gather.
-4. Create `docs/rick/<AB-id>/intel/` if missing.
+   - Does not exist → fresh gather. Cache the title from step 2 so the gather phase doesn't re-fetch it.
+6. Create `docs/rick/<folder>/intel/` if missing.
 
 ## Gather (no code, info only)
 
@@ -106,7 +115,7 @@ Terms with zero hits → open question "No vexis-docs match for `<term>`".
 
 ## Write the file
 
-Path: `docs/rick/<AB-id>/intel/current.md`. See [OUTPUT.md](OUTPUT.md) for the full section order, finding format, and refresh stale-line format.
+Path: `docs/rick/<folder>/intel/current.md`. See [OUTPUT.md](OUTPUT.md) for the full section order, finding format, and refresh stale-line format.
 
 ## Refresh
 
@@ -141,8 +150,8 @@ After writing the file, attempt bd linkage.
 
 1. `bd list --json 2>/dev/null` — bd absent → skip silently.
 2. Find issue where `metadata.ado == <id-numeric>`.
-3. Exactly one match → `bd update <bd-id> --set-metadata research=docs/rick/<AB-id>/intel/current.md`.
-4. Zero matches → print: `No bd issue linked. Once claimed: bd update <bd-id> --set-metadata research=docs/rick/<AB-id>/intel/current.md`. Continue.
+3. Exactly one match → `bd update <bd-id> --set-metadata research=docs/rick/<folder>/intel/current.md`.
+4. Zero matches → print: `No bd issue linked. Once claimed: bd update <bd-id> --set-metadata research=docs/rick/<folder>/intel/current.md`. Continue.
 5. Multiple matches → print candidate ids, do nothing, ask Morty to resolve.
 
 ## Confirm and stop
@@ -150,15 +159,21 @@ After writing the file, attempt bd linkage.
 Fresh write:
 
 ```
-Intel filed for <AB-id>: docs/rick/<AB-id>/intel/current.md
+Intel filed for <AB-id>: docs/rick/<folder>/intel/current.md
 <N> ACs, <N> findings, <N> open questions
 Domain anchor: <path> (<N> hits) | Keyword sweep: <N> cross-cutting hits
+```
+
+If the folder was *predicted* (Pre-flight step 2 priority 2 — no feature branch was checked out) AND the predicted name differs from the current branch, follow up with one line so Morty can branch into the dossier:
+
+```
+Next: git checkout -b <folder>
 ```
 
 Refresh:
 
 ```
-Intel refreshed for <AB-id>: docs/rick/<AB-id>/intel/current.md
+Intel refreshed for <AB-id>: docs/rick/<folder>/intel/current.md
 <N> carried, <M> updated/stale-marked, <K> new
 ```
 

@@ -1,25 +1,30 @@
 # Intel lookup (for other rick-* skills)
 
-How to find a rick-intel dossier before going out and re-sweeping vexis-docs / ADRs / ADO yourself. Used by `rick-plan`, `rick-mode`, and any other skill that gathers domain context.
+How to find a rick-intel dossier before going out and re-sweeping vexis-docs / ADRs / ADO yourself. Used by `rick-plan`, `rick-mode`, `rick-plan-improve`, `rick-review`, and any skill that gathers domain context.
 
-The dossier sits at `docs/rick/<AB-id>/intel/current.md` (e.g. `docs/rick/AB16289/intel/current.md`). The folder is the ADO id, not the branch name — so the lookup has to resolve the AB-id first.
+The dossier sits at `docs/rick/<folder>/intel/current.md`, where `<folder>` matches the branch name (intel writes there directly when run on a feature branch, or to the predicted branch name `<digits>-<title-slug>` when run pre-branch). So the most common lookup is just same-folder.
 
-## Resolve the AB-id (first that produces a value wins)
+## Find the dossier (first that hits wins)
 
-1. **Explicit arg.** If the caller's `$ARGUMENTS` first token matches `^(AB|ab)?\d{2,}$` (e.g. `AB16289`, `ab16289`, `16289`), normalize to `AB<digits>` and use it.
-2. **Branch name.** `git branch --show-current` and grep for `(AB|ab)\d{2,}` anywhere in it (e.g. `feat/ab16289-foo`, `16289-rotate`). Normalize to `AB<digits>`.
-3. **PR body.** `gh pr view --json body 2>/dev/null` and grep the body for `(AB|ab)\d{2,}`. Normalize.
-4. **Same-folder fallback.** Whatever folder the caller already resolved (branch-folder, slug, etc.). Check `docs/rick/<that-folder>/intel/current.md` directly — supports the case where intel was co-located under the feature folder.
+1. **Same folder.** `docs/rick/<current-folder>/intel/current.md` where `<current-folder>` is whatever the caller already resolved (sanitized branch name, plan folder, etc.). This is the common case once a branch exists — intel and everything else co-locate.
+2. **AB-id glob.** If the caller knows an AB-id (from `$ARGUMENTS`, branch name, or PR body), scan for any prior intel that mentions it:
+   ```bash
+   find docs/rick -type f -path '*/intel/current.md' -exec grep -l '<AB-id>' {} \;
+   ```
+   Single hit → use it. Multiple hits → pick the newest by `Last gathered:` header; note the others under "Open threads" so Morty can clean up.
+3. **No intel.** Fall through to whatever the caller would have done without it.
 
-If nothing resolves, no intel exists for this work. Fall through to whatever the caller would have done without intel.
+## Resolving the AB-id (when the caller doesn't already have one)
 
-## Check the path
+Priority, first that produces a value:
 
-```bash
-test -f docs/rick/<AB-id>/intel/current.md
-```
+1. **Explicit arg.** `$ARGUMENTS` first token matches `^(AB|ab)?\d{2,}$` (e.g. `AB16289`, `ab16289`, `16289`) → normalize to `AB<digits>`.
+2. **Branch name.** `git branch --show-current` and grep for `(AB|ab)\d{2,}` anywhere in it (e.g. `feat/ab16289-foo`, `16289-rotate`).
+3. **PR body.** `gh pr view --json body 2>/dev/null` and grep the body for `(AB|ab)\d{2,}`.
 
-If present, read the file. Use these sections as inputs (the file's section order is in [OUTPUT.md](OUTPUT.md)):
+## What to do once you've got the path
+
+Read the file. Use these sections as inputs (the file's section order is in [OUTPUT.md](OUTPUT.md)):
 
 - **Story Context** — parent, state, iteration, PR, depends, blocks.
 - **Scope** — verbatim ADO description + build targets.
