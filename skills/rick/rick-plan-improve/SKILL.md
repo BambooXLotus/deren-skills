@@ -1,6 +1,6 @@
 ---
 name: rick-plan-improve
-description: "Bounded 3-round improvement loop on an existing implementation plan (typically one written by /rick-plan). Takes a folder name, branch name, or explicit path; snapshots pre/post versions alongside the canonical at docs/rick/<folder>/plan/, critiques against weakness categories (specification gaps, engineering hazards, convention violations, document quality), applies surgical edits, stops on 3 rounds / zero changes / 500-line cap. Use when user invokes /rick-plan-improve, says \"improve this plan\", \"tighten the plan\", or wants to refine an existing plan without rewriting from scratch."
+description: "Bounded 3-round critique-and-fix loop on a plan written by /rick-plan. Snapshots pre/post versions alongside the canonical. 500-line cap."
 argument-hint: "[<folder> | <path-to-plan.md>] — empty resolves to current branch"
 disable-model-invocation: true
 ---
