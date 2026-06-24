@@ -68,7 +68,3 @@ Otherwise wrap the rows with this header so they slot cleanly into Step 7's P3 t
 ```
 
 Inject the wrapped block as `{PRESCAN_FINDINGS}` (consumed by agents who learn to skip these checks once AGENTS.md is updated) and append the same rows directly to the canonical report's P3 table in Step 7.
-
-## Extending the patterns
-
-Adding a pattern is one awk-block: copy an existing `if (match(content, ...))` arm, change the regex, change the issue/fix text. Keep the patterns mechanically detectable (no semantic analysis) — anything subtle belongs in an agent prompt, not the pre-scan.

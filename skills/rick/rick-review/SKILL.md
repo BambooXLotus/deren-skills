@@ -96,8 +96,6 @@ If non-empty, extract verbatim text (no rewriting) from these sections:
 
 Hold as `$PR_INTENT`. Inject as `{PR_INTENT}` in Step 5. If no PR was detected, both stay empty and Step 7.7 skips the PR body block.
 
-> Agents act on `{SYSTEM_CONTEXT}` / `{PR_INTENT}` only when AGENTS.md prompts reference them — a follow-up. The orchestrator-side wiring (Step 7.7 consuming `$PR_INTENT`) works regardless.
-
 ## Step 4 — Changed Files and Per-Agent Slices
 
 Auto-rule on scope: if `git status --short` is non-empty AND `--committed-only` was NOT passed, use working-tree scope (catches uncommitted edits). Otherwise committed-only.
