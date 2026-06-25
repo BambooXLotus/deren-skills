@@ -26,18 +26,7 @@ gh pr view --json number,title,headRefName,baseRefName 2>/dev/null
 
 If `$ARGUMENTS` starts with a number: `gh pr view ${ARGUMENTS%% *} --json number,title,headRefName,baseRefName` (the `%% *` drops trailing tokens like `--committed-only` that Step 4 reads separately; passing the whole `$ARGUMENTS` makes gh error on unknown flags). Capture `baseRefName` as `$BASE`. Stacked PRs diff against their direct parent, not `main`.
 
-**Branch verification (PR mode only):** compare `headRefName` from the PR against the current local branch. If they differ, stop and tell the user:
-
-```
-Branch mismatch.
-PR #{number} is on branch: {headRefName}
-You are currently on:      {current branch}
-
-Switch first:
-  git checkout {headRefName}
-```
-
-Never silently review the wrong branch.
+**Branch auto-swap (PR mode only):** if `headRefName` from the PR differs from the current local branch, run `gh pr checkout {number}`. This fetches the PR head (handles forks correctly) and switches to it; git refuses the checkout when uncommitted work would be clobbered, so surface that error and stop if it fails. On success, print `Switched to {headRefName} for PR #{number}` and continue. Never silently review the wrong branch.
 
 If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'`. Fallback to `main` if that fails. Use as `$BASE`.
 
