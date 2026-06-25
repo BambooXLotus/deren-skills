@@ -40,8 +40,10 @@ flowchart TD
     Review -->|"findings"| Fix["/rick-fix"]:::skill
     Review -.->|"APPROVED clean"| Comments
     Fix --> Comments["/rick-review-comments"]:::skill
+    Fix -.->|"reviewing someone else's PR"| FixAsReview["/rick-fix-as-review"]:::skill
     Fix -.->|"re-review"| Review
     Comments --> Merge["merge"]:::action
+    FixAsReview -.-> Merge
     Merge -.-> Recap["/rick-recap"]:::skill
 
     classDef skill fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
@@ -59,12 +61,13 @@ Who reads what, who writes what:
 | `/rick-respawn` | newest `<folder>/saves/<ts>.md` | (boots the next session in place) |
 | `/rick-review` | diff + intel dossier + PR body + prior versions | `<folder>/review/current.md`, `agents/v<N>/*.md` |
 | `/rick-fix` | `<folder>/review/current.md` | source code + FIXED/SKIPPED/BLOCKED markers in the report |
+| `/rick-fix-as-review` | `<folder>/review/current.md` + the working-tree fixes rick-fix just landed | `<folder>/review/proposed-fixes.patch` + `proposed-specs/`, then a PENDING GitHub PR review (suggestion blocks, neutral voice) |
 | `/rick-review-comments` | `<folder>/review/current.md` | `<folder>/review/current-comments.md` (drop-in for the human reviewer) |
 | `/rick-recap` | today's `saves/<ts>.md` across all folders | `<folder>/recaps/<ts>.md` (folder-scoped) or `_recaps/<ts>.md` (cross-folder) |
 
 The meta skills sit outside the loop. `/rick-mode` activates the Rick persona for ad-hoc analysis or pairing — no folder artifact. `/rick-improve` and `/rick-plan-improve` edit the skill prompts and plan files themselves, with their own `versions/` history alongside the target.
 
-**Why this exists.** Working with Claude on a real codebase hits two failure modes: sessions are ephemeral (conversation context dissolves when you close the tab; the next Claude has no idea what was decided), and Claude defaults to agreeable hedging, which is poison for plan critique and PR review. The rick-* skills add (1) an on-disk thread that survives session death so multi-day work doesn't restart from zero, and (2) a brutal-honesty persona that strips the hedging when you need a real opinion. `rick-improve` is meta — it edits the skill prompts themselves, versioned under `skills/rick/<name>/versions/`, so the Ricks can improve their own Rick.
+**Why this exists.** Working with Claude on a real codebase hits two failure modes: sessions are ephemeral (conversation context dissolves when you close the tab; the next Claude has no idea what was decided), and Claude defaults to agreeable hedging, which is poison for plan critique and PR review. The rick-* skills add (1) an on-disk thread that survives session death so multi-day work doesn't restart from zero, and (2) a brutal-honesty persona that strips the hedging when you need a real opinion.
 
 All TypeScript-flavored — no NestJS or TypeORM lock-in.
 
@@ -79,10 +82,11 @@ All TypeScript-flavored — no NestJS or TypeORM lock-in.
 | `rick-improve` | Self-improvement loop on any rick-* skill prompt. Bounded 3-round critique-and-fix, 250-line cap. Snapshots to `<skill>/versions/v<N>-pre.md` and `v<N>.md`, appends to `VERSIONS.md`. Uses `rick-mode` as the reference bar. Explicit invocation only. |
 | `rick-review` | Multi-agent council code review. Up to 7 specialized Rick agents review in parallel (3 always-run, 4 conditional based on diff scope), aggregated into a versioned report at `docs/rick/<folder>/review/current.md` plus `v<N>.md` and per-agent `agents/v<N>/`. Includes parasite check (verifies cited code against the diff) and skeptic pass (kills findings that don't actually matter today). |
 | `rick-fix` | Reads a `rick-review` report and resolves findings sequentially. TDD route for behavioral findings (delegates to `/tdd`), direct surgical-fix route for structural ones. Runs affected tests after each fix. Updates the report with `FIXED` / `SKIPPED` / `BLOCKED` markers. Auto-resolves the report path from the current branch. Explicit invocation only. |
+| `rick-fix-as-review` | Converts `rick-fix`'s local edits into a PENDING GitHub PR review with one-click `suggestion` blocks. Use when reviewing someone else's PR — `rick-fix` lands the fixes locally, this skill snapshots them to `docs/rick/<folder>/review/proposed-fixes.patch`, reverts the working tree, and posts the fixes as suggestion blocks in neutral reviewer voice (Rick / Council / v-numbers / P0-P3 all scrubbed). Pending = invisible until you submit in the UI. Explicit invocation only. |
 | `rick-review-comments` | Reformats a `rick-review` report into a drop-in inline-comments file for the human PR reviewer at `docs/rick/<folder>/review/current-comments.md`. Routes by `rick-fix` markers (FIXED → "verified clean", FIX-NEEDS-REVIEW / SKIPPED → annotated, BLOCKED → flagged for reviewer answer), lists Step 7.5 kills the reviewer should skip, and ends with a priority-ordered "if you only have time for some" list. Re-runnable after `rick-fix`. Explicit invocation only. |
 | `rick-recap` | End-of-day audit across today's `rick-save` files. Groups by folder, diffs the structured sections, flags real progress vs fake progress / rabbit holes / yak shaving / avoidance. Voice is the Audit Observer (S7E6 "Rickfending Your Mort"), not Rick. Cross-folder audits write to `docs/rick/_recaps/<ts>.md`; folder-filtered to `docs/rick/<folder>/recaps/<ts>.md`. |
 
-Feature-first layout: each feature gets one top-level folder under `docs/rick/`, named for the current branch (e.g. `48-rotate-share-token/`) or for the predicted branch when `/rick-intel` seeded it pre-branch (e.g. `16289-rotate-share-link-ui/`). Inside the folder, each artifact type owns a subdirectory: `intel/`, `plan/`, `review/`, `saves/`, `recaps/`. Filenames inside drop the folder prefix entirely since the directory context carries identity — `intel/current.md`, `plan/current.md`, `review/v3.md`, `saves/2026-06-05_1430.md`. Cross-folder daily recaps live at `docs/rick/_recaps/` (leading underscore sorts them apart from feature folders). `rick-improve` is meta — it edits the skill prompts themselves, with versioning under `skills/rick/<name>/versions/`.
+Feature-first layout: each feature gets one top-level folder under `docs/rick/`, named for the current branch (e.g. `48-rotate-share-token/`) or for the predicted branch when `/rick-intel` seeded it pre-branch (e.g. `16289-rotate-share-link-ui/`). Inside the folder, each artifact type owns a subdirectory: `intel/`, `plan/`, `review/`, `saves/`, `recaps/`. Filenames inside drop the folder prefix entirely since the directory context carries identity — `intel/current.md`, `plan/current.md`, `review/v3.md`, `saves/2026-06-05_1430.md`. Cross-folder daily recaps live at `docs/rick/_recaps/` (leading underscore sorts them apart from feature folders).
 
 ## Repo layout
 
