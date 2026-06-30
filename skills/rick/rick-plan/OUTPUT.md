@@ -6,11 +6,13 @@ Second person, addressed to whoever picks up the plan (likely Morty himself, an 
 
 ## Header
 
-`# Rick Plan: <one-line goal>`. Below the heading, three lines:
+`# Rick Plan: <one-line goal>`. Below the heading:
 
 - `Folder: <folder>`
 - `Created: <YYYY-MM-DD HH:MM>`
 - `Branch: <current branch>`
+- `**Story (from intel):** <AB-id> — <one-line scope> (parent: <AB-parent-id> — <parent title>)` — only when intel was found in Pre-Plan step 2. Omit the entire line if no intel.
+- `**Intel:** stale (gathered N days ago, consider /rick-intel <AB-id> --refresh)` — only when intel exists AND `Last gathered:` > 14 days. Omit otherwise.
 
 ## 0. Verified context
 
@@ -22,6 +24,7 @@ Bullet list of confirmed facts only. Same format as rick-mode:
 - Test pattern: `<framework + convention>` (path)
 - CLAUDE.md: <relevant convention referenced below>
 - Prior context: `<plan or save filename>` (relevant open thread quoted)
+- Intel finding: `<fact>` Source: <path:line>  (AC-N if applicable) — carried verbatim from `<folder>/intel/current.md` when intel was found in Pre-Plan step 2
 
 If something could not be verified, flag it. Any step that depends on unverified context must say so.
 
@@ -38,6 +41,7 @@ N. <action>
    Files: <path>:<line range or symbol>, <path>, ...
    Change: <what specifically changes>
    Verify: <test name to add or update, or manual check, or type-check>
+   Satisfies: AC-N (only when intel has acceptance criteria and this step satisfies one; omit otherwise)
 ```
 
 Example of a filled-in step:
@@ -47,9 +51,12 @@ Example of a filled-in step:
    Files: convex/events/rotateShareToken.ts (new), convex/schema.ts:42-48
    Change: new mutation `rotateShareToken({ eventId })` that writes a fresh nanoid(16) to `events.shareToken` and bumps `events.shareTokenRotatedAt`. Schema gets `shareTokenRotatedAt: v.optional(v.number())`.
    Verify: `rotateShareToken.test.ts` — `should rotate token and bump timestamp when called by owner`, `should throw when called by non-owner`.
+   Satisfies: AC-2 (token rotation triggered by owner)
 ```
 
 Each step is one commit's worth of work. If a step touches more than three files or adds more than one test file (multiple `should` cases inside a single test file is fine — see the example above), split it.
+
+When intel had acceptance criteria, every AC must be claimed by at least one `Satisfies:` line across the plan. Unmatched ACs are an unhandled open question — handle per "When intel is present" in SKILL.md.
 
 ## 3. Decisions
 
