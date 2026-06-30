@@ -16,7 +16,7 @@ Multi-agent code review. Up to seven Rick & Morty council agents review in paral
 /rick-review --committed-only  # force committed-only scope even if working tree is dirty
 ```
 
-Small diffs (≤50 lines, ≤5 files, no data/api/sec changes) auto-route to **rickest rick mode** — one Haiku-powered Rick C-137 instead of the full council. See Step 4.7.
+Small diffs (≤50 lines, ≤5 files, no data/api/sec changes) auto-route to **rickest rick mode** — one Rick C-137 on the parent session's model (Sonnet/Opus) instead of the full Haiku-heavy council. See Step 4.7.
 
 ## Step 1 — Detect Context
 
@@ -148,7 +148,7 @@ Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SC
 
 ## Step 4.7 — Rickest Rick Mode (small-change fast path)
 
-The full council is overkill on a 10-line bug fix. **Rickest rick mode** routes small, non-sensitive diffs to a single Haiku-powered Rick C-137 — one agent, one model call, same parasite check downstream. Three broad reviewers all reading the same five lines is pure token burn.
+The full council is overkill on a 10-line bug fix. **Rickest rick mode** routes small, non-sensitive diffs to a single Rick C-137 on the parent session's model (Sonnet or Opus — whatever the user is running). "Rickest" means the smartest Rick across the multiverse, not the fastest: one top-tier Rick covers every lens better than three Haiku reviewers plus specialists. Same parasite check downstream. Three broad Haiku reviewers all reading the same five lines is pure token burn AND a worse review.
 
 Gate (all must hold):
 
@@ -170,13 +170,13 @@ else
 fi
 ```
 
-When `$RICKEST=true`: Step 5 launches only Rick C-137 on Haiku, Step 5.5 deny-list is skipped (single agent can't echo prior kills), and Step 6's cross-agent contradiction check is vacuous (only the citation match runs). Everything from Step 7 onward is unchanged — aggregation, skeptic pass, and report writing handle one agent fine.
+When `$RICKEST=true`: Step 5 launches only Rick C-137 with the `model` field omitted (so it inherits the parent session's model, typically Sonnet or Opus), Step 5.5 deny-list is skipped (single agent can't echo prior kills), and Step 6's cross-agent contradiction check is vacuous (only the citation match runs). Everything from Step 7 onward is unchanged — aggregation, skeptic pass, and report writing handle one agent fine.
 
 The other six council slots render as `Skipped (rickest rick)` in the Agents table (Step 8) — distinct from `Skipped (out of scope)` so the reader knows fast path fired, not that triggers didn't.
 
 ## Step 5 — Route the Council (parallel)
 
-**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below on Haiku. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5 entirely. The rest of this step's setup (placeholder injection, `{SYSTEM_CONTEXT}`, `{PRESCAN_FINDINGS}`) still applies — Rick C-137 gets the same context, just solo.
+**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below **with the `model` field omitted** (parent session's model — Sonnet/Opus — not Haiku). Override the table's default `haiku` for this one row. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5 entirely. The rest of this step's setup (placeholder injection, `{SYSTEM_CONTEXT}`, `{PRESCAN_FINDINGS}`) still applies — Rick C-137 gets the same context, just solo.
 
 Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before launching:
 
