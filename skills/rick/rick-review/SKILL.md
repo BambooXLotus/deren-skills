@@ -16,6 +16,8 @@ Multi-agent code review. Up to seven Rick & Morty council agents review in paral
 /rick-review --committed-only  # force committed-only scope even if working tree is dirty
 ```
 
+Small diffs (≤50 lines, ≤5 files, no data/api/sec changes) auto-route to **rickest rick mode** — one Haiku-powered Rick C-137 instead of the full council. See Step 4.7.
+
 ## Step 1 — Detect Context
 
 ```bash
@@ -144,7 +146,37 @@ shrink /tmp/rr-diff-sec.txt   "$SEC"
 
 Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces them. Hits are appended directly to the P3 table in Step 7 and injected as `{PRESCAN_FINDINGS}` so the broad-slice agents know to skip these checks.
 
+## Step 4.7 — Rickest Rick Mode (small-change fast path)
+
+The full council is overkill on a 10-line bug fix. **Rickest rick mode** routes small, non-sensitive diffs to a single Haiku-powered Rick C-137 — one agent, one model call, same parasite check downstream. Three broad reviewers all reading the same five lines is pure token burn.
+
+Gate (all must hold):
+
+- Diff ≤ 50 lines changed
+- ≤ 5 files changed
+- Specialized slices empty — no data, api, or sec triggers
+
+```bash
+DIFF_LINES=$(git diff $BASE_REF --shortstat | grep -oE '[0-9]+ (insertion|deletion)' | awk '{s+=$1} END {print s+0}')
+FILES_CHANGED=$(wc -l < /tmp/rr-files.txt | tr -d ' ')
+if [ "$DIFF_LINES" -le 50 ] && [ "$FILES_CHANGED" -le 5 ] \
+   && [ ! -s /tmp/rr-diff-data.txt ] \
+   && [ ! -s /tmp/rr-diff-api.txt ] \
+   && [ ! -s /tmp/rr-diff-sec.txt ]; then
+  RICKEST=true
+  SCOPE_LABEL="$SCOPE_LABEL (rickest rick)"
+else
+  RICKEST=false
+fi
+```
+
+When `$RICKEST=true`: Step 5 launches only Rick C-137 on Haiku, Step 5.5 deny-list is skipped (single agent can't echo prior kills), and Step 6's cross-agent contradiction check is vacuous (only the citation match runs). Everything from Step 7 onward is unchanged — aggregation, skeptic pass, and report writing handle one agent fine.
+
+The other six council slots render as `Skipped (rickest rick)` in the Agents table (Step 8) — distinct from `Skipped (out of scope)` so the reader knows fast path fired, not that triggers didn't.
+
 ## Step 5 — Route the Council (parallel)
+
+**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below on Haiku. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5 entirely. The rest of this step's setup (placeholder injection, `{SYSTEM_CONTEXT}`, `{PRESCAN_FINDINGS}`) still applies — Rick C-137 gets the same context, just solo.
 
 Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before launching:
 
@@ -175,7 +207,7 @@ Launch all triggered agents in a single batched Agent tool call with `subagent_t
 
 ## Step 5.5 — Cross-version Deny-list (N >= 2 only)
 
-Skipped when N=1. For N >= 2, gather every prior "Killed in Step 7.5" bullet so agents stop re-raising findings the skeptic pass already discarded. Agents are stateless across versions: on `deren-starter`'s `63-sentry-wiring` branch, v11 through v14 each re-killed the same hedge-gated "participantName not asserted in extra-scrub test" finding, burning council budget every round.
+Skipped when N=1 or when `$RICKEST=true` (single agent has nothing to echo). For N >= 2 and full-council mode, gather every prior "Killed in Step 7.5" bullet so agents stop re-raising findings the skeptic pass already discarded. Agents are stateless across versions: on `deren-starter`'s `63-sentry-wiring` branch, v11 through v14 each re-killed the same hedge-gated "participantName not asserted in extra-scrub test" finding, burning council budget every round.
 
 This is the kill-prevention lens (don't re-raise parasites). Step 3.5(a) is the revert-prevention lens (don't undo FIXED decisions). Both ship, they catch different misbehaviors.
 
