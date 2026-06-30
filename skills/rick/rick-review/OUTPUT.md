@@ -33,7 +33,7 @@ Agent slugs: `rick-c137`, `doofus-rick`, `smart-morty`, `rick-prime`, `pickle-ri
 | Rick C-137 | Clean / Findings | <n> |
 | Doofus Rick | ... | ... |
 | Smart Morty | ... | ... |
-| Rick Prime | Skipped (out of scope) / Skipped (rickest rick) / ... | ... |
+| Rick Prime | <Verdict from Labels in SKILL.md> | ... |
 | Pickle Rick | ... | ... |
 | Scientist Rick | ... | ... |
 | Evil Morty | ... | ... |
