@@ -69,7 +69,7 @@ Output files (full list and shape in Step 8 + OUTPUT.md): `current.md`, `VERSION
 
 ## Step 3.5 — Gather System Context
 
-Before launching agents, collect context they can't safely infer. Each block is gated — skip when its trigger doesn't fire. Hold the bundle as `{SYSTEM_CONTEXT}` for Step 5 agent prompts, and `$PR_INTENT` separately for Step 7.7.
+Before launching agents, collect context they can't safely infer. Each subsection is gated — skip when its trigger doesn't fire. Section (a) contributes to `$SYSTEM_CONTEXT` (prepended to every agent's prompt in Step 5). Section (b) is held as `$PR_INTENT` for Step 7.7's cross-reference only.
 
 ### a) Settled FIXED findings — only when prior versions exist
 
@@ -77,7 +77,7 @@ Before launching agents, collect context they can't safely infer. Each block is 
 SETTLED_FIXED=$(awk '/✓ FIXED/' docs/rick/<REVIEW_NAME>/review/v*.md 2>/dev/null | sort -u)
 ```
 
-If non-empty, include in `{SYSTEM_CONTEXT}`:
+If non-empty, wrap in this block and hold as `$SYSTEM_CONTEXT`:
 
 ```
 Settled decisions from prior reviews of this branch (do NOT recommend reverting without new evidence):
@@ -86,7 +86,7 @@ Settled decisions from prior reviews of this branch (do NOT recommend reverting 
 
 ### b) PR description intent — only when a PR was detected in Step 1
 
-PR bodies routinely explain *why* something looks missing — scope splits ("except seed script"), deferred validation, intentional trade-offs. Read once upfront so agents can flag contradictions and Step 7.7 can cross-reference.
+PR bodies routinely explain *why* something looks missing — scope splits ("except seed script"), deferred validation, intentional trade-offs. Read once upfront so Step 7.7 can cross-reference. Do not inject into agent prompts — PR narratives anchor agents on validating stated intent instead of scanning for anomalies the author didn't call out. Same reason Step 1.5 keeps intel out of agent prompts.
 
 ```bash
 PR_BODY=$(gh pr view --json body --jq '.body' 2>/dev/null)
@@ -102,7 +102,7 @@ If non-empty, extract verbatim text (no rewriting) from these sections:
 - `## Additional Context`
 - Any header line matching `WORK ITEM:`
 
-Hold as `$PR_INTENT`. Inject as `{PR_INTENT}` in Step 5. If no PR was detected, both stay empty and Step 7.7 skips the PR body block.
+Hold as `$PR_INTENT` for Step 7.7 only. If no PR was detected, `$PR_INTENT` stays empty and Step 7.7 skips the PR body block.
 
 ## Step 4 — Build diff slices
 
@@ -112,7 +112,13 @@ Produce `/tmp/rr-files.txt` plus four per-agent slice files (`broad`, `data`, `a
 
 ## Step 4.5 — Shell Pre-Scan
 
-Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces them. Hits are appended directly to the P3 table in Step 7 and injected as `{PRESCAN_FINDINGS}` so the broad-slice agents know to skip these checks.
+Catch mechanically obvious nits before any agent fires. See [PRE-SCAN.md](PRE-SCAN.md) for the pattern catalog (`console.*`, `// TODO/FIXME`, `@ts-ignore`, ` as any`) and the awk script that produces `$PRESCAN`. Hits go two places: appended directly to the P3 table in Step 7, and wrapped in this block held as `$PRESCAN_FINDINGS` (prepended to every agent's prompt in Step 5, so agents don't burn tokens re-searching for what shell already caught):
+
+```
+Shell pre-scan already caught these — the orchestrator will file them at P3. Do NOT re-flag:
+
+<contents of $PRESCAN, table rows verbatim>
+```
 
 ## Step 4.7 — Rickest Rick Mode
 
@@ -131,18 +137,23 @@ When `$RICKEST=true`:
 
 ## Step 5 — Route the Council (parallel)
 
-**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below with `model` omitted. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5. Placeholder injection still applies — Rick C-137 gets the same context, just solo.
+**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below with `model` omitted. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5. Context assembly still runs — Rick C-137 gets the same substitutes and prepends, just solo.
 
-Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before launching:
+Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Two mechanics: **substitute** `{}` placeholders into the template, **prepend** `$` blocks in front of it. All triggered agents get the same context regardless of slice.
+
+**Substitute** (placeholders declared in AGENTS.md):
 
 - `{CHANGED_FILES_LIST}` — full `/tmp/rr-files.txt`
 - `{SCOPED_DIFF}` — the agent's slice file from the table below
 - `{CLAUDE_MD_CORE}` — `CLAUDE.md` excerpt (read once, inject all agents)
-- `{SYSTEM_CONTEXT}` — Step 3.5 bundle (settled FIXED + anything else assembled)
-- `{PR_INTENT}` — Step 3.5(b) PR body extract (empty when no PR)
-- `{PRESCAN_FINDINGS}` — Step 4.5 shell-verified nits (broad-slice agents must NOT re-scan for these)
 - `{REVIEW_NAME}` — from Step 2
 - `{SCOPE_LABEL}` — from Labels
+
+**Prepend** (blocks bolted onto the front of the prompt, each when non-empty):
+
+- `$SYSTEM_CONTEXT` — Step 3.5(a) settled FIXED (revert-prevention)
+- `$PRESCAN_FINDINGS` — Step 4.5 shell-verified nits (broad-slice agents must NOT re-scan for these)
+- `$DENY_LIST` block — Step 5.5, N≥2 full council only (kill-prevention)
 
 | Agent          | Slice                         | Model     | Trigger                                                                                                                       |
 | -------------- | ----------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -155,8 +166,6 @@ Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Inject before
 | Evil Morty     | `/tmp/rr-diff-sec.txt`        | inherit   | `[ -s /tmp/rr-diff-sec.txt ]` OR `grep -qE 'password\|token\|secret\|jwt\|session\|encrypt' /tmp/rr-diff-broad.txt`            |
 
 **Model legend.** `haiku` = pass `model: "haiku"`. `inherit` = omit the field (parent session = Sonnet/Opus). Inherit is reserved for lenses where reasoning depth changes verdicts (Rick Prime = architecture, Evil Morty = security).
-
-For N >= 2 in full-council mode: build the cross-version deny-list per Step 5.5 and prepend its preamble to every agent's prompt before the batch call.
 
 Launch all triggered agents in a single batched Agent tool call with `subagent_type: general-purpose`. Untriggered agents → `Skipped (out of scope)` (per Labels), not `Clean`.
 

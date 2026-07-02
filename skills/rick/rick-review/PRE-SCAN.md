@@ -57,7 +57,7 @@ awk -v OUT="$PRESCAN" -f /tmp/rr-prescan.awk /tmp/rr-diff-broad.txt
 
 ## Output
 
-If `$PRESCAN` is empty, set `{PRESCAN_FINDINGS}` = `(none — shell pre-scan found no console / TODO / @ts-ignore / as-any hits)`.
+If `$PRESCAN` is empty, skip the prepend (per SKILL.md Step 5's "each when non-empty" rule) and the P3-table append is a no-op.
 
 Otherwise wrap the rows with this header so they slot cleanly into Step 7's P3 table:
 
@@ -67,4 +67,4 @@ Otherwise wrap the rows with this header so they slot cleanly into Step 7's P3 t
 <contents of $PRESCAN>
 ```
 
-Inject the wrapped block as `{PRESCAN_FINDINGS}` (consumed by agents who learn to skip these checks once AGENTS.md is updated) and append the same rows directly to the canonical report's P3 table in Step 7.
+Append this wrapped block directly to the canonical report's P3 table in Step 7. SKILL.md Step 4.5 defines the separate agent-prepend wrap of `$PRESCAN` held as `$PRESCAN_FINDINGS`.
