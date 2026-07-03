@@ -74,11 +74,14 @@ For the parent id from step 1, run `az boards work-item show` again. Extract tit
 
 ### 3. AC parsing
 
-In order, stop at first match:
+Try each source in order, stop at first that yields ACs:
 
 1. `fields.Microsoft.VSTS.Common.AcceptanceCriteria` field on the story.
-2. Story description, regex `AC-?\d+` or `Backs AC: (AC-?\d+(?:, AC-?\d+)*)`.
-3. Parent epic's AC field — when story says "Backs AC-N of parent", pull AC-N text from parent.
+2. Story description body — scan the HTML-stripped description for AC content:
+   - "Acceptance Criteria" heading (any level, case-insensitive; also "AC", "Criteria") followed by a list.
+   - `AC-?\d+[:.\)]` markers with the prose that follows.
+   - Gherkin-style `Given … When … Then …` blocks.
+3. Parent epic's AC field — when story description references AC-N (regex `AC-?\d+` or `Backs AC: (AC-?\d+(?:, AC-?\d+)*)`), pull the referenced text from parent.
 
 No AC parseable → file uses one `## Findings` flat section instead of per-AC sections. Everything else is unchanged.
 
