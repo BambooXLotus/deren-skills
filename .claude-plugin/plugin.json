@@ -12,6 +12,7 @@
     "./skills/rick/rick-fix",
     "./skills/rick/rick-fix-as-review",
     "./skills/rick/rick-review-comments",
-    "./skills/rick/rick-recap"
+    "./skills/rick/rick-recap",
+    "./skills/rick/rick-beth"
   ]
 }
