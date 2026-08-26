@@ -1,7 +1,8 @@
 ---
 name: rick-review
 description: Multi-agent Rick & Morty council code review for TypeScript projects — up to 7 specialized agents review the diff in parallel, writes a versioned report at docs/rick/<folder>/review/current.md. Use before merging a branch, or call with a PR number to review that PR.
-argument-hint: [PR number, or leave empty to review current branch / staged changes]
+argument-hint:
+  [PR number, or leave empty to review current branch / staged changes]
 ---
 
 # Rick Review
@@ -29,13 +30,13 @@ Four implicit branches. Each short-circuits later steps; read this map first so 
 
 Canonical label vocabulary — Step 5, Step 8, Step 4.7, and OUTPUT.md all reference these. Don't redefine.
 
-| Label                            | When                                                                                |
-| -------------------------------- | ----------------------------------------------------------------------------------- |
-| `Skipped (out of scope)`         | Agent's trigger didn't fire (e.g. sec slice empty → Evil Morty skipped)             |
-| `Skipped (rickest rick)`         | Council slot bypassed because `$RICKEST=true`                                       |
-| `working-tree`                   | Diff scope: merge-base to working tree (catches uncommitted edits)                  |
-| `committed-only`                 | Diff scope: `$BASE...HEAD`                                                          |
-| `committed-only (rickest rick)`  | Rickest gate fired on top of committed-only scope (suffix added in Step 4.7)        |
+| Label                           | When                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `Skipped (out of scope)`        | Agent's trigger didn't fire (e.g. sec slice empty → Evil Morty skipped)      |
+| `Skipped (rickest rick)`        | Council slot bypassed because `$RICKEST=true`                                |
+| `working-tree`                  | Diff scope: merge-base to working tree (catches uncommitted edits)           |
+| `committed-only`                | Diff scope: `$BASE...HEAD`                                                   |
+| `committed-only (rickest rick)` | Rickest gate fired on top of committed-only scope (suffix added in Step 4.7) |
 
 ## Step 1 — Detect Context
 
@@ -53,7 +54,7 @@ If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD 
 
 ## Step 1.5 — Intel Lookup
 
-Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read its Story Context + Scope. Hold the AB-id, parent epic title, and one-line scope summary for inclusion in the report header (Step 8). The council agents review the *diff*, not the story — don't inject intel into agent prompts. No intel? Skip silently; the report header omits the story line.
+Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read its Story Context + Scope. Hold the AB-id, parent epic title, and one-line scope summary for inclusion in the report header (Step 8). The council agents review the _diff_, not the story — don't inject intel into agent prompts. No intel? Skip silently; the report header omits the story line.
 
 ## Step 2 — Resolve `REVIEW_NAME`
 
@@ -86,7 +87,7 @@ Settled decisions from prior reviews of this branch (do NOT recommend reverting 
 
 ### b) PR description intent — only when a PR was detected in Step 1
 
-PR bodies routinely explain *why* something looks missing — scope splits ("except seed script"), deferred validation, intentional trade-offs. Read once upfront so Step 7.7 can cross-reference. Do not inject into agent prompts — PR narratives anchor agents on validating stated intent instead of scanning for anomalies the author didn't call out. Same reason Step 1.5 keeps intel out of agent prompts.
+PR bodies routinely explain _why_ something looks missing — scope splits ("except seed script"), deferred validation, intentional trade-offs. Read once upfront so Step 7.7 can cross-reference. Do not inject into agent prompts — PR narratives anchor agents on validating stated intent instead of scanning for anomalies the author didn't call out. Same reason Step 1.5 keeps intel out of agent prompts.
 
 ```bash
 PR_BODY=$(gh pr view --json body --jq '.body' 2>/dev/null)
@@ -122,13 +123,13 @@ Shell pre-scan already caught these — the orchestrator will file them at P3. D
 
 ## Step 4.7 — Rickest Rick Mode
 
-The full council is overkill on a 10-line bug fix. **Rickest rick mode** routes small, non-sensitive diffs to one Rick C-137 on the parent session's model (Sonnet/Opus). "Rickest" = the smartest Rick across the multiverse, not the fastest: one top-tier Rick covers every lens better than three Haiku reviewers plus specialists.
+The full council is overkill on a 10-line bug fix. **Rickest rick mode** routes small, non-sensitive diffs to one Rick C-137. "Rickest" = the smartest Rick across the multiverse, not the fastest: one top-tier Rick covers every lens better than three generalist reviewers plus specialists.
 
 Run the rickest gate per [SLICING.md](SLICING.md#rickest-gate-step-47). True when: diff ≤ 50 lines AND ≤ 5 files AND specialized slices (data/api/sec) all empty.
 
 When `$RICKEST=true`:
 
-- Step 5 launches only Rick C-137 with the `model` field **omitted** (inherits parent session — Sonnet/Opus, not Haiku).
+- Step 5 launches only Rick C-137.
 - Step 5.5 skipped (single agent, nothing to echo).
 - Step 6's cross-agent contradiction check collapses (the cite check still runs).
 - Other six council slots render as `Skipped (rickest rick)` per Labels.
@@ -137,7 +138,7 @@ When `$RICKEST=true`:
 
 ## Step 5 — Route the Council (parallel)
 
-**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below with `model` omitted. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5. Context assembly still runs — Rick C-137 gets the same substitutes and prepends, just solo.
+**If `$RICKEST=true` from Step 4.7:** launch only the Rick C-137 row below. Treat every other row as `Skipped (rickest rick)`. Skip Step 5.5. Context assembly still runs — Rick C-137 gets the same substitutes and prepends, just solo.
 
 Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Two mechanics: **substitute** `{}` placeholders into the template, **prepend** `$` blocks in front of it. All triggered agents get the same context regardless of slice.
 
@@ -155,17 +156,17 @@ Read [AGENTS.md](AGENTS.md) for each agent's full prompt template. Two mechanics
 - `$PRESCAN_FINDINGS` — Step 4.5 shell-verified nits (broad-slice agents must NOT re-scan for these)
 - `$DENY_LIST` block — Step 5.5, N≥2 full council only (kill-prevention)
 
-| Agent          | Slice                         | Model     | Trigger                                                                                                                       |
-| -------------- | ----------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Rick C-137     | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
-| Doofus Rick    | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
-| Smart Morty    | `/tmp/rr-diff-broad.txt`      | `haiku`   | Always                                                                                                                        |
-| Rick Prime     | `/tmp/rr-diff-broad.txt`      | inherit   | `grep -qE '^\+(import\|export).*from .*\.\./' /tmp/rr-diff-broad.txt` OR `comm -13 <(git ls-tree $BASE --name-only src/ \| sort) <(git ls-tree HEAD --name-only src/ \| sort) \| grep -q .` (new top-level `src/` dir) |
-| Pickle Rick    | `/tmp/rr-diff-data.txt`       | `haiku`   | `[ -s /tmp/rr-diff-data.txt ]`                                                                                                |
-| Scientist Rick | `/tmp/rr-diff-api.txt`        | `haiku`   | `[ -s /tmp/rr-diff-api.txt ]`                                                                                                 |
-| Evil Morty     | `/tmp/rr-diff-sec.txt`        | inherit   | `[ -s /tmp/rr-diff-sec.txt ]` OR `grep -qE 'password\|token\|secret\|jwt\|session\|encrypt' /tmp/rr-diff-broad.txt`            |
+| Agent          | Slice                    | Trigger                                                                                                                                                                                                                |
+| -------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rick C-137     | `/tmp/rr-diff-broad.txt` | Always                                                                                                                                                                                                                 |
+| Doofus Rick    | `/tmp/rr-diff-broad.txt` | Always                                                                                                                                                                                                                 |
+| Smart Morty    | `/tmp/rr-diff-broad.txt` | Always                                                                                                                                                                                                                 |
+| Rick Prime     | `/tmp/rr-diff-broad.txt` | `grep -qE '^\+(import\|export).*from .*\.\./' /tmp/rr-diff-broad.txt` OR `comm -13 <(git ls-tree $BASE --name-only src/ \| sort) <(git ls-tree HEAD --name-only src/ \| sort) \| grep -q .` (new top-level `src/` dir) |
+| Pickle Rick    | `/tmp/rr-diff-data.txt`  | `[ -s /tmp/rr-diff-data.txt ]`                                                                                                                                                                                         |
+| Scientist Rick | `/tmp/rr-diff-api.txt`   | `[ -s /tmp/rr-diff-api.txt ]`                                                                                                                                                                                          |
+| Evil Morty     | `/tmp/rr-diff-sec.txt`   | `[ -s /tmp/rr-diff-sec.txt ]` OR `grep -qE 'password\|token\|secret\|jwt\|session\|encrypt' /tmp/rr-diff-broad.txt`                                                                                                    |
 
-**Model legend.** `haiku` = pass `model: "haiku"`. `inherit` = omit the field (parent session = Sonnet/Opus). Inherit is reserved for lenses where reasoning depth changes verdicts (Rick Prime = architecture, Evil Morty = security).
+**Model.** Omit the `model` field on every Agent call — all agents inherit the parent session's model.
 
 Launch all triggered agents in a single batched Agent tool call with `subagent_type: general-purpose`. Untriggered agents → `Skipped (out of scope)` (per Labels), not `Clean`.
 
