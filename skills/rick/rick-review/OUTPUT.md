@@ -16,54 +16,69 @@ Agent slugs: `rick-c137`, `doofus-rick`, `smart-morty`, `rick-prime`, `pickle-ri
 
 ## Canonical report
 
-```markdown
+<!-- Fenced as `text`, not `markdown`: Prettier reformats embedded markdown and
+     escapes the `**` cross-cutting marker to `\*\*`, corrupting the template. -->
+
+```text
 # Code Review: <REVIEW_NAME>
 
-**Branch:** <branch>  **Base:** <$BASE>  **Scope:** <SCOPE_LABEL>  **Version:** v<N>  **Date:** <YYYY-MM-DD>
+**Branch:** <branch> **Base:** <$BASE> @ <$BASE_SHA> **Scope:** <SCOPE_LABEL> **Version:** v<N> **Date:** <YYYY-MM-DD>
 
 **Story (from intel):** <AB-id> — <one-line scope> (parent: <AB-parent-id> — <parent title>)
+
 <!-- Omit the entire Story line if no intel was found in Step 1.5. -->
 
 ## Verdict
+
 <APPROVED | NEEDS FIXES (any P0, or 2+ P1)>
 
 ## Agents
-| Agent | Verdict | Findings |
-|---|---|---|
-| Rick C-137 | Clean / Findings | <n> |
-| Doofus Rick | ... | ... |
-| Smart Morty | ... | ... |
-| Rick Prime | <Verdict from Labels in SKILL.md> | ... |
-| Pickle Rick | ... | ... |
-| Scientist Rick | ... | ... |
-| Evil Morty | ... | ... |
+
+| Agent          | Verdict                           | Findings |
+| -------------- | --------------------------------- | -------- |
+| Rick C-137     | Clean / Findings                  | <n>      |
+| Doofus Rick    | ...                               | ...      |
+| Smart Morty    | ...                               | ...      |
+| Rick Prime     | <Verdict from Labels in SKILL.md> | ...      |
+| Pickle Rick    | ...                               | ...      |
+| Scientist Rick | ...                               | ...      |
+| Evil Morty     | ...                               | ...      |
 
 ## P0 — Critical
-| # | File:Line | Issue | Fix | Source |
-|---|-----------|-------|-----|--------|
-| 1 | path.ts:42 | <issue> | <fix> | Rick C-137 ** |
+
+| #   | File:Line  | Issue   | Fix   | Source          |
+| --- | ---------- | ------- | ----- | --------------- |
+| 1   | path.ts:42 | <issue> | <fix> | Rick C-137 ** |
 
 ## P1 — High
+
 (same columns)
 
 ## P2 — Medium
+
 (same columns)
 
 ## P3 — Low
+
 (same columns)
 
 ## Total Rickall
+
 - Parasites removed in Step 6: <n>
 - Killed in Step 7.5 (real, but didn't matter): <n>
 
 ### Killed in Step 7.5
+
 - <one-line summary>: <which check killed it — self-defeat / hedge / impact restatement>
 
 ## Per-Agent Output
+
 Full output from each ran agent: `versions/agents/v<N>/`
 ```
 
 Drop any P-tier with no findings entirely (don't write empty tables). Sort cross-cutting (`**`) rows to the top of their tier.
+
+`Base` renders the pinned ref and short SHA from Step 1 — `origin/main @ 86f9433` — so a later reader can tell exactly what the diff was taken against. A run Step 1 carried as local-only keeps its SHA and takes a suffix — `my-branch @ 3f9a1c2 (local-only, unfetched)` — marking its findings suspect.
 
 ## VERSIONS.md entry format
 

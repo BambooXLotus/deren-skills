@@ -4,6 +4,8 @@ Called from SKILL.md Step 4 (slices) and Step 4.7 (rickest gate).
 
 Run scope detection, slices, and slice cap as **one chained Bash call** — shell vars (`$BASE_REF`, `$BROAD`, etc.) don't persist across separate Bash tool calls, so splitting empties `$BASE_REF` and silently downgrades every later `git diff` to working-tree-vs-HEAD.
 
+`$BASE` is the pinned `origin/<branch>` ref from Step 1, substituted here as a literal — that pin is what keeps **phantom commits** out of every slice below. Don't have it in hand? Return to Step 1 and resolve it there.
+
 ## Scope detection
 
 Auto-rule: dirty working tree → `working-tree` scope (catches uncommitted edits); clean → `committed-only`. `--committed-only` in `$ARGUMENTS` forces committed-only regardless.

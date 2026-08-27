@@ -52,6 +52,28 @@ If `$ARGUMENTS` starts with a number: `gh pr view ${ARGUMENTS%% *} --json number
 
 If no PR: detect default branch with `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'`. Fallback to `main` if that fails. Use as `$BASE`.
 
+**Pin `$BASE` to the remote tip.** Everything above yields a bare branch name, and `git diff <name>...HEAD` resolves a bare name to your **local** ref. When that local ref trails origin, `git merge-base` lands on the stale tip and the base branch's own commits enter the diff as **phantom commits** — work this PR never authored, reviewed as though it did. Nothing errors; the tells (a diff wider than the PR, findings on files the author never touched, a mis-fired rickest gate) all read as a bad review rather than a bad baseline. Fetch, then prefer the remote-tracking ref.
+
+```bash
+git fetch origin --quiet 2>/dev/null || echo "WARN: fetch failed — base may be stale"
+
+if git rev-parse --verify --quiet "origin/$BASE" >/dev/null; then
+  BASE_LOCAL=$(git rev-parse --verify --quiet "$BASE" || echo "")
+  BASE="origin/$BASE"
+  if [ -n "$BASE_LOCAL" ] && [ "$BASE_LOCAL" != "$(git rev-parse "$BASE")" ]; then
+    echo "NOTE: local ${BASE#origin/} is stale — reviewing against $BASE instead"
+  fi
+fi
+BASE_SHA=$(git rev-parse --short "$BASE")
+echo "BASE=$BASE BASE_SHA=$BASE_SHA"
+```
+
+Shell variables don't survive between Bash tool calls. Read that final `echo` and carry both values forward as **literal strings** — Step 4's slices and Step 4.7's gate all resolve through this pinned ref. Hold `$BASE_SHA` for the Step 8 header.
+
+No `origin/$BASE`? The base is local-only: keep the bare name and carry `local-only` forward, which [OUTPUT.md](OUTPUT.md) renders in the header to mark the run un-pinned.
+
+**Completion:** `$BASE` resolves under `git rev-parse` and `$BASE_SHA` is set; `$BASE` is either an `origin/`-prefixed ref or explicitly carried as local-only.
+
 ## Step 1.5 — Intel Lookup
 
 Check for an intel dossier per [`../rick-intel/LOOKUP.md`](../rick-intel/LOOKUP.md). If one exists, read its Story Context + Scope. Hold the AB-id, parent epic title, and one-line scope summary for inclusion in the report header (Step 8). The council agents review the _diff_, not the story — don't inject intel into agent prompts. No intel? Skip silently; the report header omits the story line.
